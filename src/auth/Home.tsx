@@ -1,21 +1,45 @@
+import React, { useState } from "react";
 import { FaTelegramPlane, FaInstagram, FaYoutube } from "react-icons/fa";
+import { toast } from "sonner"; // ✅ toasts uchun
 
 const Home = () => {
+  const [name, setName] = useState("");
+  const [comment, setComment] = useState("");
+
+  const handleSubmit = () => {
+    if (!name.trim() || !comment.trim()) {
+      toast.warning("Iltimos, barcha maydonlarni to‘ldiring!");
+      return;
+    }
+
+    toast.success("Sizning izohingiz yuborildi!");
+    setName("");
+    setComment("");
+  };
+
+  const scrollToTop = (e: React.MouseEvent) => {
+    e.preventDefault();
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth", // ✅ smooth scroll
+    });
+  };
+
   return (
     <div className="bg-gradient-to-b from-black to-[#0d0d0d] text-white overflow-x-hidden font-poppins ">
       {/* HEADER */}
       <header className="fixed top-0 left-0 w-full bg-[#111111d0] backdrop-blur-md z-50 shadow-lg animate-slideDown">
-        <div className="max-w-[1200px] mx-auto flex justify-between items-center py-4 px-6">
+        <div className="max-w-[1200px] mx-auto flex justify-between items-center py-4 px-6" id="top">
           <img
             src="/logo.png"
             alt="logo"
             className="h-14 rounded-full drop-shadow-[0_0_10px_rgba(212,175,55,0.6)] hover:scale-110 transition-transform"
           />
-          
+
           <a href="/login">
             <button className="border-2 border-yellow-400 text-yellow-400 px-5 py-2 rounded-lg font-semibold hover:bg-yellow-400 hover:text-black transition">
-            Kirish
-          </button>
+              Kirish
+            </button>
           </a>
         </div>
       </header>
@@ -57,8 +81,6 @@ const Home = () => {
             </div>
           ))}
 
-        
-
           {/* MAP + DIREKTOR */}
           <div className="flex flex-col lg:flex-row items-center justify-between gap-10">
             <iframe
@@ -81,13 +103,20 @@ const Home = () => {
               <input
                 type="text"
                 placeholder="Ismingiz va sinfingizni kiriting"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 className="w-full p-3 mb-3 rounded-lg border border-yellow-400 bg-white/10 text-white outline-none placeholder-gray-300"
               />
               <textarea
                 placeholder="Izohingizni qoldiring"
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
                 className="w-full p-3 mb-4 rounded-lg border border-yellow-400 bg-white/10 text-white outline-none placeholder-gray-300 h-24"
               ></textarea>
-              <button className="bg-gradient-to-r from-yellow-400 to-yellow-200 text-black font-semibold px-6 py-2 rounded-lg hover:scale-105 hover:shadow-[0_0_20px_gold] transition-transform">
+              <button
+                onClick={handleSubmit}
+                className="bg-gradient-to-r from-yellow-400 to-yellow-200 text-black font-semibold px-6 py-2 rounded-lg hover:scale-105 hover:shadow-[0_0_20px_gold] transition-transform"
+              >
                 Yuborish
               </button>
             </div>
@@ -96,12 +125,12 @@ const Home = () => {
       </main>
 
       {/* SCROLL UP BUTTON */}
-      <a
-        href="#"
+      <button
+        onClick={scrollToTop}
         className="fixed bottom-10 right-10 w-12 h-12 flex items-center justify-center bg-yellow-400 text-black rounded-full font-bold text-2xl shadow-[0_0_25px_gold] hover:-translate-y-2 hover:shadow-[0_0_40px_gold] transition-all duration-300"
       >
         ↑
-      </a>
+      </button>
 
       {/* FOOTER */}
       <footer className="bg-gradient-to-b from-black to-[#0c0c0c] border-t border-yellow-900 mt-20">

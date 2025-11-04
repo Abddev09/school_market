@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 import { createUser, deleteUser, getUsers, updatePassword, updateUser } from "../hooks/apis";
 import { toast } from "sonner";
-import { TableLoadingSkeleton } from "../components/loading";
 
 interface User {
   id: number;
@@ -152,6 +151,7 @@ const Teachers = () => {
         setResetModal(false);
         setSelectedUser(null);
         setResetPassword("");
+        setSubmitting(false)
       } catch (error) {
             setSubmitting(false);
         console.error("Parolni tiklash xatosi:", error);
@@ -318,7 +318,7 @@ const Teachers = () => {
        {/*  Parolni reset qilish  */}
             <AnimatePresence>
               {resetModal && (
-                <ModalWrapper onClose={()=> setResetModal(false)} title="Student parolini tiklash">
+                <ModalWrapper onClose={()=> setResetModal(false)} title="O'qituvchi parolini tiklash">
                     <div className="space-y-3">
                       <p className="text-lg">F.I.O: {selectedUser?.first_name} {selectedUser?.last_name}</p>
                       <p>Login:  {selectedUser?.username}</p>
@@ -340,11 +340,12 @@ const Teachers = () => {
                         Bekor qilish
                       </button>
                       <button
+                      disabled={!submitting}
                         type="button"
                         onClick={handleResetPassword}
                         className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-400 text-black font-semibold shadow-md"
                       >
-                        Tiklash
+                        {submitting ? "Yuklanmoqda..." : "Tiklash"}
                       </button>
                     </div>
                 </ModalWrapper>

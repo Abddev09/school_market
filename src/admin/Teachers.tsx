@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 import { createUser, deleteUser, getUsers, updatePassword, updateUser } from "../hooks/apis";
 import { toast } from "sonner";
+import { TableLoadingSkeleton } from "../components/loading";
 
 interface User {
   id: number;
@@ -24,6 +25,9 @@ const Teachers = () => {
    const [selectedUser,setSelectedUser] = useState<User | null>(null)
     const [resetPassword,setResetPassword] = useState("")
     const [resetModal,setResetModal] = useState(false)
+    const [loading,setLoading] = useState(false)
+      const [submitting, setSubmitting] = useState(false);
+
   // ✅ Har bir modal uchun alohida state
   const [addForm, setAddForm] = useState({
     first_name: "",
@@ -46,10 +50,12 @@ const Teachers = () => {
 
   const fetchTeachers = async () => {
     try {
+      setLoading(true);
       const res = await getUsers();
       const data = res.data.filter((u: User) => u.role === 2);
       setTeachers(data);
     } catch (err) {
+            setLoading(false);
       toast.error("Ma'lumotni yuklashda xatolik!");
     }
   };
@@ -61,6 +67,7 @@ const Teachers = () => {
   // ➕ Qo'shish
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
     try {
       await createUser(addForm);
       toast.success("Ustoz muvaffaqiyatli qo'shildi!");
@@ -75,6 +82,7 @@ const Teachers = () => {
       });
       fetchTeachers();
     } catch {
+          setSubmitting(false);
       toast.error("Ustozni qo'shishda xatolik!");
     }
   };
@@ -83,7 +91,8 @@ const Teachers = () => {
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTeacher) return;
-    
+        setSubmitting(true);
+
     try {
       // ✅ editForm dan ma'lumotlarni yuborish
       const updateData = {
@@ -104,6 +113,7 @@ const Teachers = () => {
       // ✅ Listni yangilash
       fetchTeachers();
     } catch (error) {
+          setSubmitting(false);
       console.error("Update xatosi:", error);
       toast.error("Yangilashda xatolik!");
     }
@@ -112,6 +122,7 @@ const Teachers = () => {
   // 🗑️ O'chirish
   const handleDelete = async () => {
     if (!selectedTeacher) return;
+        setSubmitting(true);
     try {
       await deleteUser(selectedTeacher);
       toast.success("Ustoz o'chirildi!");
@@ -119,6 +130,7 @@ const Teachers = () => {
       setSelectedTeacher(null);
       fetchTeachers();
     } catch {
+          setSubmitting(false);
       toast.error("O'chirishda xatolik!");
     }
   };
@@ -131,7 +143,8 @@ const Teachers = () => {
         toast.error("Yangi parolni kiriting!");
         return;
       }
-  
+      setSubmitting(true);
+
       try {
         await updatePassword(selectedUser.id,resetPassword);
         
@@ -140,6 +153,7 @@ const Teachers = () => {
         setSelectedUser(null);
         setResetPassword("");
       } catch (error) {
+            setSubmitting(false);
         console.error("Parolni tiklash xatosi:", error);
         toast.error("Parolni tiklashda xatolik!");
       }
@@ -212,7 +226,8 @@ const Teachers = () => {
         )}
       </div>
 
-      {/* Table */}
+      
+           {/* Table */}
       <div className="overflow-x-auto rounded-xl shadow-lg bg-[#212121]/90 backdrop-blur-md border border-gray-700">
         <table className="w-full text-left text-sm">
           <thead className="bg-[#2a2a2a] text-yellow-400 uppercase text-xs font-semibold">
@@ -226,7 +241,7 @@ const Teachers = () => {
             </tr>
           </thead>
           <tbody>
-            {paginated.map((t, i) => (
+            {loading ?  paginated.map((t, i) => (
               <motion.tr
                 key={t.id}
                 initial={{ opacity: 0, y: 10 }}
@@ -278,7 +293,7 @@ const Teachers = () => {
                   </button>
                 </td>
               </motion.tr>
-            ))}
+            )) : <h1 className=" w-full flex justify-center items-center">Yuklanmoqda...</h1>}
           </tbody>
         </table>
       </div>

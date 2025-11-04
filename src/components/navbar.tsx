@@ -53,6 +53,7 @@ const location = useLocation();
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
+    localStorage.removeItem("id")
     navigate("/login");
   };
   if(isHome){

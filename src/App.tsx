@@ -56,7 +56,6 @@ const App = () => {
     // 🎓 Student Layout uchun alohida branch
     {
       path: "/",
-      errorElement:<NotFound/>,
       element: <ProtectedRoute allowedRole="3"><StudentLayout /></ProtectedRoute>,
       children: [
         { path: "/market", element: <Market /> },

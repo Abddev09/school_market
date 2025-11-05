@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, useMotionValue, useSpring } from "framer-motion";
 import { toast } from "sonner";
 import { getUsers } from "../hooks/apis";
-import { User, Trophy, Award, TrendingUp } from "lucide-react";
+import { User, Trophy, Award } from "lucide-react";
 
 interface Student {
   id: number;
@@ -15,6 +15,17 @@ interface Student {
 const Profile = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [currentUser, setCurrentUser] = useState<Student | null>(null);
+  const [isFlipped, setIsFlipped] = useState(false);
+  
+  const containerRef = useRef<HTMLDivElement>(null);
+  const rotateX = useMotionValue(0);
+  const rotateY = useMotionValue(0);
+  const autoRotateY = useMotionValue(0);
+
+  const springConfig = { damping: 20, stiffness: 150 };
+  const springRotateX = useSpring(rotateX, springConfig);
+  const springRotateY = useSpring(rotateY, springConfig);
+  const springAutoRotateY = useSpring(autoRotateY, springConfig);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,6 +45,33 @@ const Profile = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      autoRotateY.set(autoRotateY.get() + 360);
+    }, 20000);
+    return () => clearInterval(interval);
+  }, []);
+
+
+  // Mouse harakati
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    rotateY.set((x - 0.5) * 30);
+    rotateX.set((0.5 - y) * 30);
+  };
+
+  const handleMouseLeave = () => {
+    rotateX.set(0);
+    rotateY.set(0);
+  };
+
+  const handleClick = () => {
+    setIsFlipped(!isFlipped);
+  };
+
   if (!currentUser) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -49,121 +87,95 @@ const Profile = () => {
   const myRank = students.findIndex((s) => s.id === currentUser.id) + 1;
 
   return (
-    <div className="max-w-4xl mx-auto py-6 px-4">
-      {/* Custom Profile Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-yellow-400 via-yellow-300 to-yellow-200 p-[2px] shadow-2xl"
+    <div className="max-w-3xl mx-auto py-6 px-4">
+      <div 
+        ref={containerRef}
+        className="relative w-full h-[230px] sm:h-[350px] md:h-[350px] lg:h-[410px] mb-8"
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
+        style={{ perspective: '2000px' }}
       >
-        <div className="relative bg-gradient-to-br from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-3xl p-6 overflow-hidden">
-          {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-5">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,204,0,0.1) 35px, rgba(255,204,0,0.1) 70px)`
-            }}></div>
-          </div>
+       
 
-          {/* Content */}
-          <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-6">
-            {/* Left Side - Avatar & Info */}
-            <div className="flex items-center gap-4 flex-1">
-              {/* Avatar with HUMO logo style */}
-              <div className="relative">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-yellow-400 to-yellow-600 p-[3px] shadow-lg">
-                  <div className="w-full h-full rounded-2xl bg-[#1a1a1a] flex items-center justify-center">
-                    <User className="text-yellow-400" size={40} />
-                  </div>
+        {/* 3D Karta */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          className="w-full h-full relative cursor-pointer"
+          style={{
+            transformStyle: 'preserve-3d',
+          }}
+          animate={{
+             opacity: 1, y: 0,
+            rotateY: (isFlipped ? 180 : 0) + springRotateY.get() + springAutoRotateY.get(),
+            rotateX: springRotateX.get()
+          }}
+          transition={{ duration: 0.6 }}
+        >
+          {/* OLD TOMONI - humocard.jpg */}
+          <div 
+            className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl"
+            style={{ 
+              backfaceVisibility: 'hidden',
+              transform: 'rotateY(0deg) translateZ(20px)'
+            }}
+          >
+            <div className="relative w-full h-full">
+              {/* Background Image */}
+              <div
+                className="absolute inset-0"
+                style={{
+                  backgroundImage: `url("/humocard.jpg")`,
+                  backgroundSize: "contain",
+                  backgroundPosition: "center",
+                  backgroundRepeat: "no-repeat",
+                }}
+              />
+
+              {/* Content */}
+              <div className="relative z-10 h-full flex items-end p-6 sm:p-8 md:px-22 max-md:pl-10">
+                <div className="capitalize">
+                  <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-extrabold text-amber-400">
+                    {currentUser.ball || 0}{" "}
+                    <span className="lowercase text-xl sm:text-2xl md:text-3xl">ball</span>
+                  </h1>
+                  <h2 className="text-xl sm:text-2xl font-bold text-white mb-5 italic">
+                    {currentUser.first_name} {currentUser.last_name}
+                  </h2>
+                 
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-yellow-400 flex items-center justify-center shadow-lg">
-                  <Award size={16} className="text-black" />
-                </div>
-              </div>
-
-              {/* Name & Info */}
-              <div className="flex-1">
-                <h2 className="text-2xl font-bold text-white mb-1">
-                  {currentUser.first_name} {currentUser.last_name}
-                </h2>
-                <p className="text-yellow-400 text-sm font-medium mb-1">
-                  {currentUser.classe?.name || "Sinf noma'lum"}
-                </p>
-                <p className="text-gray-400 text-xs italic">
-                  "255-maktab" hududida amal qiladi
-                </p>
-              </div>
-            </div>
-
-            {/* Right Side - Balance & HUMO Logo */}
-            <div className="flex items-center gap-4 md:border-l border-yellow-400/20 md:pl-6">
-              {/* Balance */}
-              <div className="text-right">
-                <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">
-                  Ball
-                </p>
-                <p className="text-3xl font-bold text-yellow-400">
-                  {currentUser.ball.toLocaleString()}
-                </p>
-              </div>
-
-              {/* HUMO Logo Style */}
-              <div className="relative">
-                <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  {/* Outer Circle */}
-                  <circle cx="30" cy="30" r="28" stroke="url(#gradient)" strokeWidth="2" />
-                  
-                  {/* HUMO Text */}
-                  <text 
-                    x="30" 
-                    y="25" 
-                    textAnchor="middle" 
-                    fill="#FCD34D" 
-                    fontSize="12" 
-                    fontWeight="bold"
-                    fontFamily="Arial, sans-serif"
-                  >
-                    255
-                  </text>
-                  
-                  {/* MARKET Text */}
-                  <text 
-                    x="30" 
-                    y="38" 
-                    textAnchor="middle" 
-                    fill="#FCD34D" 
-                    fontSize="8" 
-                    fontFamily="Arial, sans-serif"
-                  >
-                    MARKET
-                  </text>
-                  
-                  {/* Gradient Definition */}
-                  <defs>
-                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#FCD34D" />
-                      <stop offset="100%" stopColor="#F59E0B" />
-                    </linearGradient>
-                  </defs>
-                </svg>
               </div>
             </div>
           </div>
 
-          {/* Card Number Style Bottom */}
-          <div className="relative z-10 mt-4 pt-4 border-t border-yellow-400/10 flex justify-between items-center text-xs text-gray-500">
-            <span className="font-mono tracking-wider">
-              ID: {currentUser.id.toString().padStart(8, '0')}
-            </span>
-            <span className="flex items-center gap-1">
-              <TrendingUp size={14} />
-              Reyting: #{myRank}
-            </span>
+          {/* ORQA TOMONI - behindcard.jpg */}
+          <div 
+            className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl"
+            style={{ 
+              backfaceVisibility: 'hidden',
+              transform: 'rotateY(180deg) translateZ(20px)'
+            }}
+          >
+            <div className="relative w-full h-full">
+              {/* Background Image */}
+              <div
+                className="absolute inset-0"
+                style={{
+                  backgroundImage: `url("/behindhumo.jpg")`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  backgroundRepeat: "no-repeat",
+                }}
+              />
+            </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+
+      
+      </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-3 md:grid-cols-3 gap-4 mb-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -253,7 +265,6 @@ const Profile = () => {
             </motion.div>
           ))}
 
-          {/* Agar user top10da bo'lmasa */}
           {myRank > 10 && (
             <>
               <div className="text-center text-gray-500 py-3 text-sm">

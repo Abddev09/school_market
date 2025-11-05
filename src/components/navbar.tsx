@@ -61,8 +61,8 @@ const location = useLocation();
   }else{
 
     return (
-      <>
-        <div className="fixed top-0 left-0 h-full z-30">
+      <div className="sticky top-0 left-0 h-full">
+        <div className="h-screen z-30 w-full">
           <div className="flex flex-col h-full text-gray-200 bg-[#111]/90 backdrop-blur-sm border-r border-white/10">
             {/* Brand */}
             <div className="px-6 py-6 border-b border-white/5">
@@ -158,7 +158,7 @@ const location = useLocation();
             </motion.div>
           )}
         </AnimatePresence>
-      </>
+      </div>
     );
   }
 };

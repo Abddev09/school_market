@@ -190,15 +190,20 @@ const Shop = () => {
           >
             {/* Image */}
             <div className="relative h-48 bg-[#1a1a1a] flex items-center justify-center overflow-hidden">
-              {product.image ? (
                 <img
-                  src={product.image}
+                  src={product.image || "/placeholder.png"}
                   alt={product.name}
+                  onError={(e) => {
+                  const target = e.currentTarget;
+
+                  // 1. faqat agar hozirgi src fallback emas bo‘lsa, o‘zgartiramiz
+                  if (!target.src.includes("placeholder.png")) {
+                    target.src = "/placeholder.png";
+                  }
+                }}
                   className="w-full h-full object-cover"
                 />
-              ) : (
-                <FaImage className="text-gray-600 text-6xl" />
-              )}
+            
               <div className="absolute top-2 right-2">
                 <span
                   className={`px-2 py-1 text-xs rounded-full font-semibold ${

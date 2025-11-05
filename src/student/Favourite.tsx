@@ -92,6 +92,14 @@ const Favourite = () => {
 
                 <img
                   src={p.image || "/placeholder.png"}
+                  onError={(e) => {
+                    const target = e.currentTarget;
+
+                    // 1. faqat agar hozirgi src fallback emas bo‘lsa, o‘zgartiramiz
+                    if (!target.src.includes("placeholder.png")) {
+                      target.src = "/placeholder.png";
+                    }
+                  }}
                   alt={p.name}
                   className="w-full h-32 sm:h-40 object-cover rounded-lg mb-2 sm:mb-3 border border-gray-700"
                 />
@@ -103,7 +111,7 @@ const Favourite = () => {
                   {p.desc}
                 </p>
                 <p className="text-yellow-300 font-bold mt-1 sm:mt-2 text-sm sm:text-base">
-                  {p.price} so‘m
+                  {p.price || 0} ball
                 </p>
 
                 <button

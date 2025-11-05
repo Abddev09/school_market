@@ -174,6 +174,14 @@ const Order = () => {
                       <img
                         src={order.product_detail.image}
                         alt={order.product_detail.name || "Mahsulot"}
+                        onError={(e) => {
+                          const target = e.currentTarget;
+
+                          // 1. faqat agar hozirgi src fallback emas bo‘lsa, o‘zgartiramiz
+                          if (!target.src.includes("placeholder.png")) {
+                            target.src = "/placeholder.png";
+                          }
+                        }}
                         className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
                       />
                     )}

@@ -42,15 +42,10 @@ const DashboardLayout: React.FC = () => {
               onClick={() => setSidebarOpen(false)}
             />
   
-            <aside
-              className={`fixed left-0 top-0 h-screen w-72 z-50 transform transition-transform duration-300 shadow-2xl
-                bg-gradient-to-b from-[#0c0c0c] to-[#444343] border-r border-yellow-900/20 
-                ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:relative md:w-64`}
-            >
-              <div className="h-full flex flex-col">
+           
+              <div className="h-full sticky top-0 left-0">
                 <Navbar onNavigate={() => setSidebarOpen(false)} />
               </div>
-            </aside>
           </>
         )}
   

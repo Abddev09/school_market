@@ -76,6 +76,24 @@ const Cart = () => {
   };
 
   const handleOrder = async () => {
+
+    const today = new Date();
+
+  // 2️⃣ Ruxsat berilgan sana — 25 May 2026
+  const allowedDate = new Date(2026, 4, 25); // Eslatma: 4 = May (0-based index)
+
+  // 3️⃣ Faqat sana qismini solishtiramiz (soatni emas)
+  const isSameDay =
+    today.getFullYear() === allowedDate.getFullYear() &&
+    today.getMonth() === allowedDate.getMonth() &&
+    today.getDate() === allowedDate.getDate();
+
+  // 4️⃣ Agar bugun 25 May 2026 bo‘lmasa — warning chiqsin
+  if (!isSameDay) {
+    toast.warning("⚠️ Bugun buyurtma berib bo‘lmaydi! Faqat 25-May 2026 kuni mumkin!");
+    return;
+  }
+
     // Agar balans 0 bo'lsa
     if (balance === 0) {
       toast.error("❌ Ballaringiz yetarli emas! Hozirgi balans: 0", {
@@ -90,6 +108,8 @@ const Cart = () => {
       toast.warning("⚠️ Buyurtma berish uchun kamida bitta mahsulot tanlang!");
       return;
     }
+
+
 
     // Tanlangan mahsulotlar va ularning umumiy narxi
     const selectedProducts = cart.filter((item) => selectedItems.includes(item.id));
@@ -233,6 +253,14 @@ const Cart = () => {
             <img
               src={item.product_detail.image}
               alt={item.product_detail.title}
+              onError={(e) => {
+                const target = e.currentTarget;
+
+                // 1. faqat agar hozirgi src fallback emas bo‘lsa, o‘zgartiramiz
+                if (!target.src.includes("placeholder.png")) {
+                  target.src = "/placeholder.png";
+                }
+              }}
               className="rounded-xl w-full h-40 object-cover mb-3"
             />
             <h2 className="text-lg font-medium text-[#ffcc00]">

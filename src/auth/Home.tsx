@@ -35,7 +35,7 @@ const Home = () => {
             alt="logo"
             className="h-14 rounded-full drop-shadow-[0_0_10px_rgba(212,175,55,0.6)] hover:scale-110 transition-transform"
           />
-
+          <p className="font-bold text-xl">Toshkent shahar Yashnabod tumani 255-maktab  Humo card</p>
           <a href="/login">
             <button className="border-2 border-yellow-400 text-yellow-400 px-5 py-2 rounded-lg font-semibold hover:bg-yellow-400 hover:text-black transition">
               Kirish
@@ -137,9 +137,9 @@ const Home = () => {
         <div className="max-w-[1200px] mx-auto px-4 py-12 flex flex-wrap justify-between gap-10">
           <div>
             <img
-              src="/bb.png"
+              src="/logo.png"
               alt="logo"
-              className="h-14 drop-shadow-[0_0_15px_rgba(212,175,55,0.4)]"
+              className="h-14 drop-shadow-[0_0_15px_rgba(212,175,55,0.4)] rounded-full"
             />
             <h2 className="text-yellow-400 mt-3 text-xl font-bold">
               255-Maktab

@@ -3,20 +3,41 @@
 
 import { Loader2 } from "lucide-react";
 
-// Table Loading Skeleton
-export const TableLoadingSkeleton = () => (
-  <tbody>
-    {[1, 2, 3, 4, 5].map((i) => (
-      <tr key={i} className="border-b border-gray-700 animate-pulse">
-        {[1, 2, 3, 4, 5, 6].map((j) => (
-          <td key={j} className="p-3">
-            <div className="h-4 bg-gray-700 rounded w-full"></div>
-          </td>
-        ))}
-      </tr>
-    ))}
-  </tbody>
-);
+// Centered Circular Progress Loader
+export const CenteredProgressLoader = () => {
+  return (
+    <div className="flex flex-col gap-5 items-center justify-center min-h-[200px] w-full">
+      <svg
+        className="w-16 h-16 text-yellow-400 animate-spin"
+        viewBox="0 0 100 100"
+      >
+        <circle
+          className="opacity-25"
+          cx="50"
+          cy="50"
+          r="45"
+          stroke="currentColor"
+          strokeWidth="10"
+          fill="none"
+        />
+        <circle
+          className="opacity-75"
+          cx="50"
+          cy="50"
+          r="45"
+          stroke="currentColor"
+          strokeWidth="10"
+          strokeDasharray="283"
+          strokeDashoffset="75"
+          fill="none"
+          strokeLinecap="round"
+        />
+      </svg>
+      <h1>Ma'lumotlar yuklanmoqda...</h1>
+    </div>
+  );
+};
+
 
 // Button Loading Spinner
 export const ButtonSpinner = () => (

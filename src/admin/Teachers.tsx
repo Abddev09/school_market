@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 import { createUser, deleteUser, getUsers, updatePassword, updateUser } from "../hooks/apis";
 import { toast } from "sonner";
+import { CenteredProgressLoader } from "../components/loading";
 
 interface User {
   id: number;
@@ -53,9 +54,9 @@ const Teachers = () => {
       const res = await getUsers();
       const data = res.data.filter((u: User) => u.role === 2);
       setTeachers(data);
+      setLoading(false)
     } catch (err) {
             setLoading(false);
-      toast.error("Ma'lumotni yuklashda xatolik!");
     }
   };
 
@@ -66,8 +67,8 @@ const Teachers = () => {
   // ➕ Qo'shish
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
     try {
+      setSubmitting(true);
       await createUser(addForm);
       toast.success("Ustoz muvaffaqiyatli qo'shildi!");
       setShowModal(false);
@@ -80,6 +81,7 @@ const Teachers = () => {
         gender: true,
       });
       fetchTeachers();
+        setSubmitting(true);
     } catch {
           setSubmitting(false);
       toast.error("Ustozni qo'shishda xatolik!");
@@ -90,9 +92,10 @@ const Teachers = () => {
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTeacher) return;
-        setSubmitting(true);
 
     try {
+        setSubmitting(true);
+
       // ✅ editForm dan ma'lumotlarni yuborish
       const updateData = {
         id: editForm.id,
@@ -111,6 +114,8 @@ const Teachers = () => {
       
       // ✅ Listni yangilash
       fetchTeachers();
+          setSubmitting(false);
+
     } catch (error) {
           setSubmitting(false);
       console.error("Update xatosi:", error);
@@ -121,13 +126,14 @@ const Teachers = () => {
   // 🗑️ O'chirish
   const handleDelete = async () => {
     if (!selectedTeacher) return;
-        setSubmitting(true);
     try {
+      setSubmitting(true);
       await deleteUser(selectedTeacher);
       toast.success("Ustoz o'chirildi!");
       setShowDeleteModal(false);
       setSelectedTeacher(null);
       fetchTeachers();
+          setSubmitting(false);
     } catch {
           setSubmitting(false);
       toast.error("O'chirishda xatolik!");
@@ -142,9 +148,10 @@ const Teachers = () => {
         toast.error("Yangi parolni kiriting!");
         return;
       }
-      setSubmitting(true);
 
       try {
+      setSubmitting(true);
+
         await updatePassword(selectedUser.id,resetPassword);
         
         toast.success("Parol muvaffaqiyatli tiklandi!");
@@ -241,7 +248,7 @@ const Teachers = () => {
             </tr>
           </thead>
           <tbody>
-            {loading ?  paginated.map((t, i) => (
+            {!loading ?  paginated.map((t, i) => (
               <motion.tr
                 key={t.id}
                 initial={{ opacity: 0, y: 10 }}
@@ -293,7 +300,11 @@ const Teachers = () => {
                   </button>
                 </td>
               </motion.tr>
-            )) : <h1 className=" w-full flex justify-center items-center">Yuklanmoqda...</h1>}
+            )) : <tr>
+              <th colSpan={6}>
+                <CenteredProgressLoader/>
+                </th>
+              </tr>}
           </tbody>
         </table>
       </div>
@@ -340,7 +351,7 @@ const Teachers = () => {
                         Bekor qilish
                       </button>
                       <button
-                      disabled={!submitting}
+                        disabled={submitting}
                         type="button"
                         onClick={handleResetPassword}
                         className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-400 text-black font-semibold shadow-md"
@@ -393,7 +404,7 @@ const Teachers = () => {
                   <option value="false">Ayol</option>
                 </select>
               </div>
-              <ModalActions onClose={() => setShowModal(false)} />
+              <ModalActions onClose={() => setShowModal(false)} submitting={submitting}/>
             </form>
           </ModalWrapper>
         )}
@@ -431,7 +442,7 @@ const Teachers = () => {
                   <option value="false">Ayol</option>
                 </select>
               </div>
-              <ModalActions onClose={() => setShowEditModal(false)} />
+              <ModalActions onClose={() => setShowEditModal(false)} submitting={submitting}/>
             </form>
           </ModalWrapper>
         )}
@@ -496,20 +507,30 @@ const ModalWrapper = ({
   </motion.div>
 );
 
-const ModalActions = ({ onClose }: { onClose: () => void }) => (
+const ModalActions = ({ onClose, submitting }: { onClose: () => void; submitting: boolean }) => (
   <div className="flex justify-end gap-3 mt-5">
     <button
       type="button"
       onClick={onClose}
-      className="px-4 py-2 rounded bg-[#2a2a2a] hover:bg-[#333] border border-gray-600 transition"
+      disabled={submitting}
+      className={`px-4 py-2 rounded border border-gray-600 transition ${
+        submitting 
+          ? 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed' 
+          : 'bg-[#2a2a2a] hover:bg-[#333] text-gray-100'
+      }`}
     >
       Bekor qilish
     </button>
     <button
+      disabled={submitting}
       type="submit"
-      className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-400 text-black font-semibold shadow-md"
+      className={`px-4 py-2 rounded font-semibold shadow-md transition ${
+        submitting
+          ? 'bg-[#3a3a3a] text-gray-600 cursor-not-allowed'
+          : 'bg-yellow-500 hover:bg-yellow-400 text-black'
+      }`}
     >
-      Saqlash
+      {submitting ? "Yuklanmoqda..." : "Saqlash"}
     </button>
   </div>
 );

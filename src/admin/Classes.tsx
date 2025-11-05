@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 import { getClasses, createClass, updateClass, deleteClass, getUsers } from "../hooks/apis";
 import { toast } from "sonner";
+import { CenteredProgressLoader } from "../components/loading";
 
 interface Teacher {
   id: number;
@@ -25,7 +26,7 @@ const Classes = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
-
+  const [loading,setLoading] = useState(false)
   const [addForm, setAddForm] = useState({
     name: "",
     teacher: 0,
@@ -42,20 +43,24 @@ const Classes = () => {
 
   const fetchClasses = async () => {
     try {
+      setLoading(true)
       const res = await getClasses();
       setClasses(res.data);
+      setLoading(false)
     } catch (err) {
-      toast.error("Sinflarni yuklashda xatolik!");
+      setLoading(false)
     }
   };
 
   const fetchTeachers = async () => {
     try {
+      setLoading(true)
       const res = await getUsers();
       const teachersList = res.data.filter((u: Teacher) => u.role === 2);
       setTeachers(teachersList);
+      setLoading(false)
     } catch (err) {
-      toast.error("Ustozlarni yuklashda xatolik!");
+      setLoading(false)
     }
   };
 
@@ -154,7 +159,11 @@ const Classes = () => {
             </tr>
           </thead>
           <tbody>
-            {paginated.length === 0 ? (
+            {loading ? (<tr>
+              <th colSpan={4}>
+                <CenteredProgressLoader/> 
+              </th>
+            </tr>) : paginated.length === 0 ? (
               <tr>
                 <td colSpan={4} className="p-8 text-center text-gray-400">
                   Ma'lumot topilmadi

@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaEdit, FaTrash, FaClock, FaCheckCircle } from "react-icons/fa";
 import { toast } from "sonner";
 import { deleteOrder, getOrders, getProducts, getUsers, updateOrder } from "../hooks/apis";
+import { Tube } from "ogl";
+import { CenteredProgressLoader } from "../components/loading";
 
 // API funksiyalari import qiling
 // import { getOrders, updateOrder, deleteOrder, getUsers, getProducts } from "../hooks/apis";
@@ -38,7 +40,7 @@ const Orders = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-
+  const [loading,setLoading] =useState(false)
   const [editForm, setEditForm] = useState({
     id: 0,
     status: "1" as "1" | "2",
@@ -53,33 +55,39 @@ const Orders = () => {
 
   const fetchOrders = async () => {
     try {
+      setLoading(true)
       const res = await getOrders();
       setOrders(res.data);
-      
+      setLoading(false)
     } catch (err) {
-      toast.error("Buyurtmalarni yuklashda xatolik!");
+      setLoading(false)
+      console.log(err)
     }
   };
 
   const fetchStudents = async () => {
     try {
+      setLoading(true)
       const res = await getUsers();
       const studentsList = res.data.filter((u: any) => u.role === 3);
       setStudents(studentsList);
       
-   
+      setLoading(false)
     } catch (err) {
-      toast.error("O'quvchilarni yuklashda xatolik!");
+      setLoading(false)
+      console.log("O'quvchilarni yuklashda xatolik!");
     }
   };
 
   const fetchProducts = async () => {
     try {
+      setLoading(true)
       const res = await getProducts();
       setProducts(res.data);
-      
+      setLoading(false)
     } catch (err) {
-      toast.error("Mahsulotlarni yuklashda xatolik!");
+      setLoading(false)
+      console.log("Mahsulotlarni yuklashda xatolik!");
     }
   };
 
@@ -249,7 +257,11 @@ const Orders = () => {
             </tr>
           </thead>
           <tbody>
-            {paginated.length === 0 ? (
+            {loading ? (<tr>
+              <th colSpan={8}> 
+                <CenteredProgressLoader/>
+              </th>
+            </tr>) : paginated.length === 0 ? (
               <tr>
                 <td colSpan={7} className="p-8 text-center text-gray-400">
                   Ma'lumot topilmadi

@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaPlus, FaEdit, FaTrash, FaImage } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 import { getProducts, createProduct, updateProduct, deleteProduct } from "../hooks/apis";
 import { toast } from "sonner";
+import { CenteredProgressLoader } from "../components/loading";
 
 interface Product {
   id: number;
@@ -22,7 +23,8 @@ const Shop = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
-
+  const [submitting, setSubmitting] = useState(false);
+  const [loading ,setLoading] = useState(false)
   // ✅ Har bir modal uchun alohida state
   const [addForm, setAddForm] = useState({
     name: "",
@@ -49,11 +51,13 @@ const Shop = () => {
   // 🛍️ Mahsulotlarni yuklash
   const fetchProducts = async () => {
     try {
+      setLoading(true)
       const res = await getProducts();
       console.log(res.data)
       setProducts(res.data);
+      setLoading(false)
     } catch (err) {
-      toast.error("Mahsulotlarni yuklashda xatolik!");
+      setLoading(false)
     }
   };
 
@@ -85,6 +89,7 @@ const Shop = () => {
     e.preventDefault();
 
     try {
+      setSubmitting(true);
       const formData = new FormData();
       formData.append("name", addForm.name);
       formData.append("desc", addForm.desc);
@@ -107,7 +112,9 @@ const Shop = () => {
       });
       setImagePreview("");
       fetchProducts();
+      setSubmitting(false);
     } catch {
+      setSubmitting(false);
       toast.error("Mahsulotni qo'shishda xatolik!");
     }
   };
@@ -117,6 +124,7 @@ const Shop = () => {
     e.preventDefault();
 
     try {
+      setSubmitting(true);
       const formData = new FormData();
       formData.append("id", String(editForm.id));
       formData.append("name", editForm.name);
@@ -138,7 +146,9 @@ const Shop = () => {
       setSelectedProduct(null);
       setImagePreview("");
       fetchProducts();
+      setSubmitting(false);
     } catch (error) {
+      setSubmitting(false);
       console.error("Update xatosi:", error);
       toast.error("Yangilashda xatolik!");
     }
@@ -148,12 +158,15 @@ const Shop = () => {
   const handleDelete = async () => {
     if (!selectedProduct) return;
     try {
+      setSubmitting(true);
       await deleteProduct(selectedProduct.id);
       toast.success("Mahsulot o'chirildi!");
       setShowDeleteModal(false);
       setSelectedProduct(null);
       fetchProducts();
+      setSubmitting(false);
     } catch {
+      setSubmitting(false);
       toast.error("O'chirishda xatolik!");
     }
   };
@@ -180,7 +193,7 @@ const Shop = () => {
 
       {/* Products Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6 beh">
-        {paginated.map((product, i) => (
+        {loading ? (<div className="absolute left-[50%] translate-y-2.5"><CenteredProgressLoader/></div>) :  paginated.map((product, i) => (
           <motion.div
             key={product.id}
             initial={{ opacity: 0, scale: 0.9 }}
@@ -196,7 +209,7 @@ const Shop = () => {
                   onError={(e) => {
                   const target = e.currentTarget;
 
-                  // 1. faqat agar hozirgi src fallback emas bo‘lsa, o‘zgartiramiz
+                  // 1. faqat agar hozirgi src fallback emas bo'lsa, o'zgartiramiz
                   if (!target.src.includes("placeholder.png")) {
                     target.src = "/placeholder.png";
                   }
@@ -358,16 +371,26 @@ const Shop = () => {
                     setShowModal(false);
                     setImagePreview("");
                   }}
-                  className="px-4 py-2 rounded bg-[#2a2a2a] hover:bg-[#333] border border-gray-600 transition"
+                  disabled={submitting}
+                  className={`px-4 py-2 rounded border border-gray-600 transition ${
+                    submitting
+                      ? 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed'
+                      : 'bg-[#2a2a2a] hover:bg-[#333] text-gray-100'
+                  }`}
                 >
                   Bekor qilish
                 </button>
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-400 text-black font-semibold shadow-md"
+                  disabled={submitting}
+                  className={`px-4 py-2 rounded font-semibold shadow-md transition ${
+                    submitting
+                      ? 'bg-[#3a3a3a] text-gray-600 cursor-not-allowed'
+                      : 'bg-yellow-500 hover:bg-yellow-400 text-black'
+                  }`}
                 >
-                  Saqlash
+                  {submitting ? "Yuklanmoqda..." : "Saqlash"}
                 </button>
               </div>
             </div>
@@ -455,16 +478,26 @@ const Shop = () => {
                     setShowEditModal(false);
                     setImagePreview("");
                   }}
-                  className="px-4 py-2 rounded bg-[#2a2a2a] hover:bg-[#333] border border-gray-600 transition"
+                  disabled={submitting}
+                  className={`px-4 py-2 rounded border border-gray-600 transition ${
+                    submitting
+                      ? 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed'
+                      : 'bg-[#2a2a2a] hover:bg-[#333] text-gray-100'
+                  }`}
                 >
                   Bekor qilish
                 </button>
                 <button
                   type="button"
                   onClick={handleUpdate}
-                  className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-400 text-black font-semibold shadow-md"
+                  disabled={submitting}
+                  className={`px-4 py-2 rounded font-semibold shadow-md transition ${
+                    submitting
+                      ? 'bg-[#3a3a3a] text-gray-600 cursor-not-allowed'
+                      : 'bg-yellow-500 hover:bg-yellow-400 text-black'
+                  }`}
                 >
-                  Saqlash
+                  {submitting ? "Yuklanmoqda..." : "Saqlash"}
                 </button>
               </div>
             </div>
@@ -485,15 +518,25 @@ const Shop = () => {
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 rounded bg-[#2a2a2a] hover:bg-[#333] border border-gray-600 transition"
+                disabled={submitting}
+                className={`px-4 py-2 rounded border border-gray-600 transition ${
+                  submitting
+                    ? 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed'
+                    : 'bg-[#2a2a2a] hover:bg-[#333] text-gray-100'
+                }`}
               >
                 Bekor qilish
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 rounded bg-red-500 hover:bg-red-400 text-white font-semibold"
+                disabled={submitting}
+                className={`px-4 py-2 rounded font-semibold transition ${
+                  submitting
+                    ? 'bg-[#3a3a3a] text-gray-600 cursor-not-allowed'
+                    : 'bg-red-500 hover:bg-red-400 text-white'
+                }`}
               >
-                O'chirish
+                {submitting ? "Yuklanmoqda..." : "O'chirish"}
               </button>
             </div>
           </ModalWrapper>

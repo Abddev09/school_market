@@ -29,7 +29,7 @@ const Market = () => {
   const [addingToCart, setAddingToCart] = useState<number | null>(null);
   const [togglingFav, setTogglingFav] = useState<number | null>(null);
 
-  const userId = Number(localStorage.getItem("id") || "1");
+  const userId = localStorage.getItem("id");
 
   const fetchData = async () => {
     try {
@@ -54,7 +54,7 @@ const Market = () => {
 
   // Product ID bo'yicha favourite borligini tekshirish
   const isFavourite = (productId: number) =>
-    favourites.some((f) => f.product === productId && f.student === userId);
+    favourites.some((f) => f.product === productId && f.student === Number(userId));
 
   const toggleFavourite = async (productId: number) => {
     if (togglingFav) return; // Agar boshqa favourite toggle qilinayotgan bo'lsa

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { Package, Calendar, CheckCircle, Clock, XCircle, Hash, Loader2, AlertCircle } from "lucide-react";
+import { Package, Calendar, CheckCircle, Clock, XCircle, Hash, Loader2 } from "lucide-react";
 import { getMyOrders } from "../hooks/apis";
 
 interface ProductDetail {
@@ -108,9 +108,7 @@ const Order = () => {
     return `${weekDay}, ${day}-${month} ${year}-yil, ${hours}:${minutes}`;
   };
 
-  const isProductAvailable = (count: number) => {
-    return count > 0;
-  };
+
 
   if (loading) {
     return (

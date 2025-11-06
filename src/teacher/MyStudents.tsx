@@ -71,7 +71,6 @@ const MyStudents = () => {
       const studentss = res.data;
       setStudents(studentss);
       setLoading(false);
-      console.log(res)
     } catch (err) {
       setLoading(false);
       toast.error("O'quvchilarni yuklashda xatolik!");

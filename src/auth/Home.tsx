@@ -1,32 +1,59 @@
 import React, { useState } from "react";
 import { FaTelegramPlane, FaInstagram, FaYoutube } from "react-icons/fa";
-import { toast } from "sonner"; // ✅ toasts uchun
+import { toast } from "sonner";
 
 const Home = () => {
   const [name, setName] = useState("");
   const [comment, setComment] = useState("");
-  
-  const handleSubmit = () => {
+
+  // 🔒 Telegram sozlamalari (test uchun)
+  const BOT_TOKEN = import.meta.env.VITE_TG_TOKEN;
+  const CHANNEL_ID = "@Humo_card255";
+
+  const handleSubmit = async () => {
     if (!name.trim() || !comment.trim()) {
       toast.warning("Iltimos, barcha maydonlarni to‘ldiring!");
       return;
     }
 
-    toast.success("Sizning izohingiz yuborildi!");
-    setName("");
-    setComment("");
+    const text = `🗣 Yangi izoh:\n\n👤 Ism: <b>${name}</b>\n💬 Izoh: ${comment}`;
+
+    try {
+      const res = await fetch(
+        `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: CHANNEL_ID,
+            text,
+            parse_mode: "HTML",
+          }),
+        }
+      );
+
+      if (res.ok) {
+        toast.success("Izoh yuborildi! ✅");
+        setName("");
+        setComment("");
+      } else {
+        toast.error("Xatolik: yuborilmadi ❌");
+      }
+    } catch (error) {
+      toast.error("Tarmoqda xatolik! ⚠️");
+    }
   };
 
   const scrollToTop = (e: React.MouseEvent) => {
     e.preventDefault();
     window.scrollTo({
       top: 0,
-      behavior: "smooth", // ✅ smooth scroll
+      behavior: "smooth",
     });
   };
 
   return (
-    <div className="bg-gradient-to-b from-black to-[#0d0d0d] text-white overflow-x-hidden font-poppins ">
+    <div className="bg-gradient-to-b from-black to-[#0d0d0d] text-white overflow-x-hidden font-poppins">
       {/* HEADER */}
       <header className="fixed top-0 left-0 w-full bg-[#111111d0] backdrop-blur-md z-50 shadow-lg animate-slideDown">
         <div className="max-w-[1200px] mx-auto flex justify-between items-center py-4 px-6" id="top">
@@ -35,7 +62,9 @@ const Home = () => {
             alt="logo"
             className="h-14 rounded-full drop-shadow-[0_0_10px_rgba(212,175,55,0.6)] hover:scale-110 transition-transform"
           />
-          <p className="font-bold text-xl">Toshkent shahar Yashnabod tumani 255-maktab  Humo card</p>
+          <p className="font-bold text-xl">
+            Toshkent shahar Yashnabod tumani 255-maktab Humo card
+          </p>
           <a href="/login">
             <button className="border-2 border-yellow-400 text-yellow-400 px-5 py-2 rounded-lg font-semibold hover:bg-yellow-400 hover:text-black transition">
               Kirish

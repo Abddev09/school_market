@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { Package, Calendar, CheckCircle, Clock, XCircle, Hash } from "lucide-react";
+import { Package, Calendar, CheckCircle, Clock, XCircle, Hash, Loader2, AlertCircle } from "lucide-react";
 import { getMyOrders } from "../hooks/apis";
 
 interface ProductDetail {
@@ -23,8 +23,11 @@ interface OrderItem {
   product_detail: ProductDetail;
 }
 
+
+
 const Order = () => {
   const [orders, setOrders] = useState<OrderItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchOrders();
@@ -32,12 +35,13 @@ const Order = () => {
 
   const fetchOrders = async () => {
     try {
-      // Bu yerga sizning API funksiyangizni qo'ying
+      setLoading(true);
       const res = await getMyOrders();
       setOrders(res.data);
-      
     } catch {
       toast.error("Buyurtmalarni yuklashda xatolik!");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -104,7 +108,20 @@ const Order = () => {
     return `${weekDay}, ${day}-${month} ${year}-yil, ${hours}:${minutes}`;
   };
 
- 
+  const isProductAvailable = (count: number) => {
+    return count > 0;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#0f0f0f]">
+        <div className="text-center">
+          <Loader2 size={48} className="animate-spin text-[#ffcc00] mx-auto mb-4" />
+          <p className="text-gray-400">Buyurtmalar yuklanmoqda...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (orders.length === 0) {
     return (
@@ -169,15 +186,15 @@ const Order = () => {
             <div className="p-4">
               {order.product_detail ? (
                 <>
-                  <div className="flex gap-4 bg-[#0f0f0f] rounded-xl p-4 border border-[#2a2a2a]">
+                  <div className="flex gap-4 bg-[#0f0f0f] rounded-xl p-4 border border-[#2a2a2a] relative transition-all">
+                  
+                    
                     {order.product_detail?.image && (
                       <img
                         src={order.product_detail.image}
                         alt={order.product_detail.name || "Mahsulot"}
                         onError={(e) => {
                           const target = e.currentTarget;
-
-                          // 1. faqat agar hozirgi src fallback emas bo‘lsa, o‘zgartiramiz
                           if (!target.src.includes("placeholder.png")) {
                             target.src = "/placeholder.png";
                           }
@@ -205,14 +222,9 @@ const Order = () => {
                             </span>
                           </div>
                         )}
-                        {order.product_detail.count && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-400 text-sm">Soni:</span>
-                            <span className="text-gray-200 font-semibold">
-                              {order.product_detail.count} ta
-                            </span>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2">
+                          
+                        </div>
                       </div>
                     </div>
                   </div>

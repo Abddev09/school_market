@@ -19,7 +19,7 @@ const DashboardLayout: React.FC = () => {
   else{
 
     return (
-      <div className="min-h-screen flex bg-gradient-to-b from-[black]/70 to-[#090909] text-gray-100">
+      <div className="min-h-screen flex bg-linear-to-b from-[black]/70 to-[#090909] text-gray-100">
         {/* Mobile top bar when sidebar hidden */}
         <div className="fixed top-4 left-4 z-50 md:hidden">
           <button

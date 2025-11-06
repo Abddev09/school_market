@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaEdit, FaTrash, FaClock, FaCheckCircle } from "react-icons/fa";
 import { toast } from "sonner";
 import { deleteOrder, getOrders, getProducts, getUsers, updateOrder } from "../hooks/apis";
-import { Tube } from "ogl";
 import { CenteredProgressLoader } from "../components/loading";
 
 // API funksiyalari import qiling

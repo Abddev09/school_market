@@ -8,7 +8,6 @@ import {
   getFavourite,
   createCart,
 } from "../hooks/apis";
-import { FaImage } from "react-icons/fa";
 
 interface Product {
   id: number;

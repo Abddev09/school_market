@@ -19,7 +19,6 @@ import Cart from "./student/Cart";
 import Profile from "./student/Profile";
 import Market from "./student/Market";
 import NotFound from "./components/404";
-import ClassStudents from "./admin/class_students";
 
 const App = () => {
   const router = createBrowserRouter([
@@ -35,7 +34,6 @@ const App = () => {
         { path: "/teachers", element:<ProtectedRoute allowedRole="1"> <Teachers /></ProtectedRoute> },
         { path: "/shop", element: <ProtectedRoute allowedRole="1"><Shop /></ProtectedRoute> },
         { path: "/orders", element:<ProtectedRoute allowedRole="1"> <Orders /> </ProtectedRoute>},
-        { path: "/class-students/:id", element:<ProtectedRoute allowedRole="2"> <ClassStudents /> </ProtectedRoute>},
         {
           path: "/dashboard/teacher",
           element: (

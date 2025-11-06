@@ -5,7 +5,7 @@ import { toast } from "sonner"; // ✅ toasts uchun
 const Home = () => {
   const [name, setName] = useState("");
   const [comment, setComment] = useState("");
-
+  
   const handleSubmit = () => {
     if (!name.trim() || !comment.trim()) {
       toast.warning("Iltimos, barcha maydonlarni to‘ldiring!");

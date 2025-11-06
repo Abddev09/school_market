@@ -102,7 +102,7 @@ const Cart = () => {
 
   const handleOrder = async () => {
     const today = new Date();
-    const allowedDate = new Date(2025, 10, 6);
+    const allowedDate = new Date(2026, 4, 25);
 
     const isSameDay =
       today.getFullYear() === allowedDate.getFullYear() &&

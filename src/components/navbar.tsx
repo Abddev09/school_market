@@ -42,7 +42,7 @@ const location = useLocation();
       // 👨‍🏫 Ustoz bo‘lsa
       return [
         { path: "/dashboard/teacher", label: "Baholash", icon: <FaUserGraduate size={18} /> },
-        { path: "/students", label: "Mening o‘quvchilarim", icon: <FaUsers size={18} /> },
+        { path: "/my-students", label: "Mening o‘quvchilarim", icon: <FaUsers size={18} /> },
       ];
     }
 

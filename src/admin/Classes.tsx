@@ -26,7 +26,8 @@ const Classes = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
-  const [loading,setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
   const [addForm, setAddForm] = useState({
     name: "",
     teacher: 0,
@@ -43,24 +44,24 @@ const Classes = () => {
 
   const fetchClasses = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       const res = await getClasses();
       setClasses(res.data);
-      setLoading(false)
+      setLoading(false);
     } catch (err) {
-      setLoading(false)
+      setLoading(false);
     }
   };
 
   const fetchTeachers = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       const res = await getUsers();
       const teachersList = res.data.filter((u: Teacher) => u.role === 2);
       setTeachers(teachersList);
-      setLoading(false)
+      setLoading(false);
     } catch (err) {
-      setLoading(false)
+      setLoading(false);
     }
   };
 
@@ -78,6 +79,7 @@ const Classes = () => {
     }
 
     try {
+      setModalLoading(true);
       await createClass(addForm);
       toast.success("Sinf muvaffaqiyatli qo'shildi!");
       setShowModal(false);
@@ -88,6 +90,8 @@ const Classes = () => {
       fetchClasses();
     } catch {
       toast.error("Sinfni qo'shishda xatolik!");
+    } finally {
+      setModalLoading(false);
     }
   };
 
@@ -98,8 +102,9 @@ const Classes = () => {
       toast.error("Ustozni tanlang!");
       return;
     }
-    console.log(editForm)
+
     try {
+      setModalLoading(true);
       await updateClass(editForm);
       toast.success("Sinf ma'lumotlari yangilandi!");
       setShowEditModal(false);
@@ -108,12 +113,15 @@ const Classes = () => {
     } catch (error) {
       console.error("Update xatosi:", error);
       toast.error("Yangilashda xatolik!");
+    } finally {
+      setModalLoading(false);
     }
   };
 
   const handleDelete = async () => {
     if (!selectedClass) return;
     try {
+      setModalLoading(true);
       await deleteClass(selectedClass.id);
       toast.success("Sinf o'chirildi!");
       setShowDeleteModal(false);
@@ -121,6 +129,8 @@ const Classes = () => {
       fetchClasses();
     } catch {
       toast.error("O'chirishda xatolik!");
+    } finally {
+      setModalLoading(false);
     }
   };
 
@@ -159,11 +169,13 @@ const Classes = () => {
             </tr>
           </thead>
           <tbody>
-            {loading ? (<tr>
-              <th colSpan={4}>
-                <CenteredProgressLoader/> 
-              </th>
-            </tr>) : paginated.length === 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan={4}>
+                  <CenteredProgressLoader/> 
+                </td>
+              </tr>
+            ) : paginated.length === 0 ? (
               <tr>
                 <td colSpan={4} className="p-8 text-center text-gray-400">
                   Ma'lumot topilmadi
@@ -231,6 +243,7 @@ const Classes = () => {
         </div>
       )}
 
+      {/* Qo'shish modali */}
       <AnimatePresence>
         {showModal && (
           <ModalWrapper onClose={() => setShowModal(false)} title="✨ Yangi sinf qo'shish">
@@ -242,6 +255,7 @@ const Classes = () => {
                 onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
                 className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
                 required
+                disabled={modalLoading}
               />
               
               <div>
@@ -251,6 +265,7 @@ const Classes = () => {
                   onChange={(e) => setAddForm({ ...addForm, teacher: Number(e.target.value) })}
                   className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
                   required
+                  disabled={modalLoading}
                 >
                   <option value="">Ustozni tanlang</option>
                   {teachers.map((teacher) => (
@@ -266,15 +281,24 @@ const Classes = () => {
                   type="button"
                   onClick={() => setShowModal(false)}
                   className="px-4 py-2 rounded bg-[#2a2a2a] hover:bg-[#333] border border-gray-600 transition"
+                  disabled={modalLoading}
                 >
                   Bekor qilish
                 </button>
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-400 text-black font-semibold shadow-md"
+                  className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-400 text-black font-semibold shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  disabled={modalLoading}
                 >
-                  Saqlash
+                  {modalLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                      Saqlanmoqda...
+                    </>
+                  ) : (
+                    "Saqlash"
+                  )}
                 </button>
               </div>
             </div>
@@ -282,6 +306,7 @@ const Classes = () => {
         )}
       </AnimatePresence>
 
+      {/* Tahrirlash modali */}
       <AnimatePresence>
         {showEditModal && (
           <ModalWrapper onClose={() => setShowEditModal(false)} title="✏️ Sinfni tahrirlash">
@@ -293,6 +318,7 @@ const Classes = () => {
                 onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                 className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
                 required
+                disabled={modalLoading}
               />
               
               <div>
@@ -302,6 +328,7 @@ const Classes = () => {
                   onChange={(e) => setEditForm({ ...editForm, teacher: Number(e.target.value) })}
                   className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
                   required
+                  disabled={modalLoading}
                 >
                   <option value="">Ustozni tanlang</option>
                   {teachers.map((teacher) => (
@@ -317,15 +344,24 @@ const Classes = () => {
                   type="button"
                   onClick={() => setShowEditModal(false)}
                   className="px-4 py-2 rounded bg-[#2a2a2a] hover:bg-[#333] border border-gray-600 transition"
+                  disabled={modalLoading}
                 >
                   Bekor qilish
                 </button>
                 <button
                   type="button"
                   onClick={handleUpdate}
-                  className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-400 text-black font-semibold shadow-md"
+                  className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-400 text-black font-semibold shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  disabled={modalLoading}
                 >
-                  Saqlash
+                  {modalLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                      Yangilanmoqda...
+                    </>
+                  ) : (
+                    "Saqlash"
+                  )}
                 </button>
               </div>
             </div>
@@ -333,6 +369,7 @@ const Classes = () => {
         )}
       </AnimatePresence>
 
+      {/* O'chirish modali */}
       <AnimatePresence>
         {showDeleteModal && (
           <ModalWrapper onClose={() => setShowDeleteModal(false)} title="⚠️ Sinfni o'chirish">
@@ -346,14 +383,23 @@ const Classes = () => {
               <button
                 onClick={() => setShowDeleteModal(false)}
                 className="px-4 py-2 rounded bg-[#2a2a2a] hover:bg-[#333] border border-gray-600 transition"
+                disabled={modalLoading}
               >
                 Bekor qilish
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 rounded bg-red-500 hover:bg-red-400 text-white font-semibold"
+                className="px-4 py-2 rounded bg-red-500 hover:bg-red-400 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                disabled={modalLoading}
               >
-                O'chirish
+                {modalLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    O'chirilmoqda...
+                  </>
+                ) : (
+                  "O'chirish"
+                )}
               </button>
             </div>
           </ModalWrapper>

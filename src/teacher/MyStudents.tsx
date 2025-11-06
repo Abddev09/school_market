@@ -12,7 +12,7 @@ interface User {
   username: string;
   role: number;
   gender: boolean;
-  ball:number;
+  ball: number;
   classe_id: number;
   classe: Class;
   password: string | number;
@@ -26,6 +26,7 @@ interface Class {
 
 const MyStudents = () => {
   const [students, setStudents] = useState<User[]>([]);
+  const [myClass, setMyClass] = useState<Class | null>(null);
   const [classes, setClasses] = useState<Class[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -34,8 +35,10 @@ const MyStudents = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [resetPasswordValue, setResetPasswordValue] = useState("");
   const [resetModal, setResetModal] = useState(false);
-const [newClassName, setNewClassName] = useState("");
+  const [newClassName, setNewClassName] = useState("");
   const [showClassModal, setShowClassModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
 
   const [addForm, setAddForm] = useState({
     first_name: "",
@@ -58,32 +61,38 @@ const [newClassName, setNewClassName] = useState("");
   const perPage = 20;
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterClass, setFilterClass] = useState<number>(0);
-const fetchStudents = async () => {
-  try {
-    const res = await getMyStudents()
-   
-    const studentss = res.data.students
-    
-    setStudents(studentss)
+  const teacher_id = Number(localStorage.getItem("id"));
 
-  } catch (err) {
-    toast.error("O‘quvchilarni yuklashda xatolik!");
-  }
-};
+  const fetchStudents = async () => {
+    try {
+      setLoading(true);
+      const res = await getMyStudents();
+      const studentss = res.data.students;
+      setMyClass(res.data.classe);
+      setStudents(studentss);
+      setLoading(false);
+    } catch (err) {
+      setLoading(false);
+      toast.error("O'quvchilarni yuklashda xatolik!");
+    }
+  };
 
-     const handleCreateClass = async () => {
-      if (!newClassName.trim()) return toast.error("Sinf nomini kiriting!");
-    
-      try {
-        await createClass({ name: newClassName, teacher: teacher_id });
-        toast.success("Sinf yaratildi!");
-        setShowClassModal(false);
-        window.location.reload()
-      } catch (err) {
-        toast.error("Sinf yaratishda xatolik!");
-      }
-    };
+  const handleCreateClass = async () => {
+    if (!newClassName.trim()) return toast.error("Sinf nomini kiriting!");
+
+    try {
+      setModalLoading(true);
+      await createClass({ name: newClassName, teacher: teacher_id });
+      toast.success("Sinf yaratildi!");
+      setShowClassModal(false);
+      window.location.reload();
+    } catch (err) {
+      toast.error("Sinf yaratishda xatolik!");
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
   const fetchClasses = async () => {
     try {
       const res = await getClasses();
@@ -100,13 +109,14 @@ const fetchStudents = async () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (addForm.classe_id === 0) {
       toast.error("Sinfni tanlang!");
       return;
     }
 
     try {
+      setModalLoading(true);
       await createUser(addForm);
       toast.success("O'quvchi muvaffaqiyatli qo'shildi!");
       setShowModal(false);
@@ -121,18 +131,21 @@ const fetchStudents = async () => {
       fetchStudents();
     } catch {
       toast.error("O'quvchini qo'shishda xatolik!");
+    } finally {
+      setModalLoading(false);
     }
   };
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (editForm.classe_id === 0) {
       toast.error("Sinfni tanlang!");
       return;
     }
 
     try {
+      setModalLoading(true);
       const updateData = {
         id: editForm.id,
         first_name: editForm.first_name,
@@ -149,12 +162,15 @@ const fetchStudents = async () => {
     } catch (error) {
       console.error("Update xatosi:", error);
       toast.error("Yangilashda xatolik!");
+    } finally {
+      setModalLoading(false);
     }
   };
 
   const handleDelete = async () => {
     if (!selectedStudent) return;
     try {
+      setModalLoading(true);
       await deleteUser(selectedStudent);
       toast.success("O'quvchi o'chirildi!");
       setShowDeleteModal(false);
@@ -162,18 +178,21 @@ const fetchStudents = async () => {
       fetchStudents();
     } catch {
       toast.error("O'chirishda xatolik!");
+    } finally {
+      setModalLoading(false);
     }
   };
 
   const handleResetPassword = async () => {
     if (!selectedUser) return;
-    
+
     if (!resetPasswordValue.trim()) {
       toast.error("Yangi parolni kiriting!");
       return;
     }
 
     try {
+      setModalLoading(true);
       await updatePassword(selectedUser.id, resetPasswordValue);
       toast.success("Parol muvaffaqiyatli tiklandi!");
       setResetModal(false);
@@ -182,22 +201,26 @@ const fetchStudents = async () => {
     } catch (error) {
       console.error("Parolni tiklash xatosi:", error);
       toast.error("Parolni tiklashda xatolik!");
+    } finally {
+      setModalLoading(false);
     }
   };
 
   const getClassName = (classId: number) => {
-    const foundClass = classes.find(c => c.id === classId);
+    const foundClass = classes.find((c) => c.id === classId);
     return foundClass ? foundClass.name : "Sinf topilmadi";
   };
-  const teacher_id = Number(localStorage.getItem("id"))
+
+  // Faqat o'z sinfi o'quvchilarini filter qilish
   const filteredStudents = students.filter((student) => {
-    const matchesSearch = 
+    const matchesSearch =
       student.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.last_name.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesClass = filterClass === 0 || student.classe?.id === filterClass;
-    
-    return matchesSearch && matchesClass;
+
+    // Faqat o'z sinfidagi o'quvchilar
+    const isMyStudent = myClass ? student.classe?.id === myClass.id : true;
+
+    return matchesSearch && isMyStudent;
   });
 
   const totalPages = Math.ceil(filteredStudents.length / perPage);
@@ -206,10 +229,17 @@ const fetchStudents = async () => {
   return (
     <div className="p-6 bg-gradient-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-2xl">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-yellow-400 tracking-wide">
-          O'quvchilar ro'yxati
-        </h1>
-        <div className="flex gap-5 items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-yellow-400 tracking-wide">
+            O'quvchilar ro'yxati
+          </h1>
+          {myClass && (
+            <p className="text-gray-400 mt-2">
+              {myClass.name} sinfi - Jami: {filteredStudents.length} ta o'quvchi
+            </p>
+          )}
+        </div>
+        <div className="flex gap-3 items-center">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.9 }}
@@ -219,14 +249,14 @@ const fetchStudents = async () => {
             <FaPlus /> O'quvchi qo'shish
           </motion.button>
           <ImportButton onImported={(data) => console.log("Import qilinganlar:", data)} />
-            <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={() => setShowClassModal(true)}
-          className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold px-4 py-2 rounded-lg shadow-md transition"
-        >
-          <FaPlus /> Sinf qo'shish
-        </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setShowClassModal(true)}
+            className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold px-4 py-2 rounded-lg shadow-md transition"
+          >
+            <FaPlus /> Sinf qo'shish
+          </motion.button>
         </div>
       </div>
 
@@ -243,13 +273,11 @@ const fetchStudents = async () => {
             className="w-full border border-gray-600 bg-[#2a2a2a] p-3 rounded-lg focus:outline-none focus:border-yellow-400 text-gray-100 placeholder-gray-500"
           />
         </div>
-       
 
-        {(searchTerm || filterClass !== 0) && (
+        {searchTerm && (
           <button
             onClick={() => {
               setSearchTerm("");
-              setFilterClass(0);
               setCurrentPage(1);
             }}
             className="px-4 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition border border-red-500/30 whitespace-nowrap"
@@ -274,9 +302,15 @@ const fetchStudents = async () => {
             </tr>
           </thead>
           <tbody>
-            {paginated.length === 0 ? (
+            {loading ? (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-gray-400">
+                <td colSpan={8} className="p-8 text-center">
+                  <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                </td>
+              </tr>
+            ) : paginated.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="p-8 text-center text-gray-400">
                   Ma'lumot topilmadi
                 </td>
               </tr>
@@ -289,7 +323,7 @@ const fetchStudents = async () => {
                   transition={{ delay: i * 0.03 }}
                   className="border-b border-gray-700 hover:bg-yellow-400/10 transition"
                 >
-                  <td className="p-3 text-gray-300">{i+1}</td>
+                  <td className="p-3 text-gray-300">{i + 1}</td>
                   <td className="p-3 text-gray-300">{s.username}</td>
                   <td className="p-3 text-gray-100">{s.first_name}</td>
                   <td className="p-3 text-gray-100">{s.last_name}</td>
@@ -359,40 +393,62 @@ const fetchStudents = async () => {
         </div>
       )}
 
-{showClassModal && (
-  <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-    <div className="bg-[#1e1e1e] p-6 rounded-2xl border border-gray-700 w-[90%] max-w-md">
-      <h3 className="text-xl font-bold text-yellow-400 mb-4">Yangi sinf yaratish</h3>
-      <input
-        type="text"
-        placeholder="Sinf nomi..."
-        value={newClassName}
-        onChange={(e) => setNewClassName(e.target.value)}
-        className="w-full bg-[#2a2a2a] border border-gray-600 rounded-lg p-3 mb-4 focus:outline-none focus:border-yellow-400 text-gray-100"
-      />
-      <div className="flex justify-end gap-3">
-        <button onClick={() => setShowClassModal(false)} className="px-4 py-2 bg-gray-700 rounded-lg text-gray-300 hover:bg-gray-600">
-          Bekor qilish
-        </button>
-        <button onClick={handleCreateClass} className="px-4 py-2 bg-yellow-500 text-black rounded-lg font-medium hover:bg-yellow-400">
-          Yaratish
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+      {/* Sinf yaratish modali */}
+      {showClassModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-[#1e1e1e] p-6 rounded-2xl border border-gray-700 w-[90%] max-w-md">
+            <h3 className="text-xl font-bold text-yellow-400 mb-4">Yangi sinf yaratish</h3>
+            <input
+              type="text"
+              placeholder="Sinf nomi..."
+              value={newClassName}
+              onChange={(e) => setNewClassName(e.target.value)}
+              disabled={modalLoading}
+              className="w-full bg-[#2a2a2a] border border-gray-600 rounded-lg p-3 mb-4 focus:outline-none focus:border-yellow-400 text-gray-100 disabled:opacity-50"
+            />
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowClassModal(false)}
+                disabled={modalLoading}
+                className="px-4 py-2 bg-gray-700 rounded-lg text-gray-300 hover:bg-gray-600 disabled:opacity-50"
+              >
+                Bekor qilish
+              </button>
+              <button
+                onClick={handleCreateClass}
+                disabled={modalLoading}
+                className="px-4 py-2 bg-yellow-500 text-black rounded-lg font-medium hover:bg-yellow-400 disabled:opacity-50 flex items-center gap-2"
+              >
+                {modalLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                    Yaratilmoqda...
+                  </>
+                ) : (
+                  "Yaratish"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Parolni tiklash modali */}
       <AnimatePresence>
         {resetModal && (
           <ModalWrapper onClose={() => setResetModal(false)} title="Student parolini tiklash">
             <div className="space-y-3">
-              <p className="text-lg">F.I.O: {selectedUser?.first_name} {selectedUser?.last_name}</p>
+              <p className="text-lg">
+                F.I.O: {selectedUser?.first_name} {selectedUser?.last_name}
+              </p>
               <p>Login: {selectedUser?.username}</p>
-              <input 
+              <input
                 type="text"
                 placeholder="Yangi parol"
                 value={resetPasswordValue}
                 onChange={(e) => setResetPasswordValue(e.target.value)}
-                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
+                disabled={modalLoading}
+                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400 disabled:opacity-50"
                 required
               />
             </div>
@@ -400,22 +456,32 @@ const fetchStudents = async () => {
               <button
                 type="button"
                 onClick={() => setResetModal(false)}
-                className="px-4 py-2 rounded bg-[#2a2a2a] hover:bg-[#333] border border-gray-600 transition"
+                disabled={modalLoading}
+                className="px-4 py-2 rounded bg-[#2a2a2a] hover:bg-[#333] border border-gray-600 transition disabled:opacity-50"
               >
                 Bekor qilish
               </button>
               <button
                 type="button"
                 onClick={handleResetPassword}
-                className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-400 text-black font-semibold shadow-md"
+                disabled={modalLoading}
+                className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-400 text-black font-semibold shadow-md disabled:opacity-50 flex items-center gap-2"
               >
-                Tiklash
+                {modalLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                    Tiklanmoqda...
+                  </>
+                ) : (
+                  "Tiklash"
+                )}
               </button>
             </div>
           </ModalWrapper>
         )}
       </AnimatePresence>
 
+      {/* Qo'shish modali */}
       <AnimatePresence>
         {showModal && (
           <ModalWrapper onClose={() => setShowModal(false)} title="✨ Yangi o'quvchi qo'shish">
@@ -425,7 +491,8 @@ const fetchStudents = async () => {
                 placeholder="Ism"
                 value={addForm.first_name}
                 onChange={(e) => setAddForm({ ...addForm, first_name: e.target.value })}
-                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
+                disabled={modalLoading}
+                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400 disabled:opacity-50"
                 required
               />
               <input
@@ -433,7 +500,8 @@ const fetchStudents = async () => {
                 placeholder="Familiya"
                 value={addForm.last_name}
                 onChange={(e) => setAddForm({ ...addForm, last_name: e.target.value })}
-                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
+                disabled={modalLoading}
+                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400 disabled:opacity-50"
                 required
               />
               <input
@@ -441,7 +509,8 @@ const fetchStudents = async () => {
                 placeholder="Parol"
                 value={addForm.password}
                 onChange={(e) => setAddForm({ ...addForm, password: e.target.value })}
-                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
+                disabled={modalLoading}
+                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400 disabled:opacity-50"
                 required
               />
               <div className="flex gap-3 items-center">
@@ -449,7 +518,8 @@ const fetchStudents = async () => {
                 <select
                   value={addForm.gender ? "true" : "false"}
                   onChange={(e) => setAddForm({ ...addForm, gender: e.target.value === "true" })}
-                  className="border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:border-yellow-400"
+                  disabled={modalLoading}
+                  className="border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:border-yellow-400 disabled:opacity-50"
                 >
                   <option value="true">Erkak</option>
                   <option value="false">Ayol</option>
@@ -460,7 +530,8 @@ const fetchStudents = async () => {
                 <select
                   value={addForm.classe_id}
                   onChange={(e) => setAddForm({ ...addForm, classe_id: Number(e.target.value) })}
-                  className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
+                  disabled={modalLoading}
+                  className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400 disabled:opacity-50"
                   required
                 >
                   <option value={0}>Sinfni tanlang</option>
@@ -475,16 +546,25 @@ const fetchStudents = async () => {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded bg-[#2a2a2a] hover:bg-[#333] border border-gray-600 transition"
+                  disabled={modalLoading}
+                  className="px-4 py-2 rounded bg-[#2a2a2a] hover:bg-[#333] border border-gray-600 transition disabled:opacity-50"
                 >
                   Bekor qilish
                 </button>
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-400 text-black font-semibold shadow-md"
+                  disabled={modalLoading}
+                  className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-400 text-black font-semibold shadow-md disabled:opacity-50 flex items-center gap-2"
                 >
-                  Saqlash
+                  {modalLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                      Saqlanmoqda...
+                    </>
+                  ) : (
+                    "Saqlash"
+                  )}
                 </button>
               </div>
             </div>
@@ -492,6 +572,7 @@ const fetchStudents = async () => {
         )}
       </AnimatePresence>
 
+      {/* Tahrirlash modali */}
       <AnimatePresence>
         {showEditModal && (
           <ModalWrapper onClose={() => setShowEditModal(false)} title="✏️ O'quvchini tahrirlash">
@@ -501,7 +582,8 @@ const fetchStudents = async () => {
                 placeholder="Ism"
                 value={editForm.first_name}
                 onChange={(e) => setEditForm({ ...editForm, first_name: e.target.value })}
-                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
+                disabled={modalLoading}
+                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400 disabled:opacity-50"
                 required
               />
               <input
@@ -509,7 +591,8 @@ const fetchStudents = async () => {
                 placeholder="Familiya"
                 value={editForm.last_name}
                 onChange={(e) => setEditForm({ ...editForm, last_name: e.target.value })}
-                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
+                disabled={modalLoading}
+                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400 disabled:opacity-50"
                 required
               />
               <div className="flex gap-3 items-center">
@@ -517,7 +600,8 @@ const fetchStudents = async () => {
                 <select
                   value={editForm.gender ? "true" : "false"}
                   onChange={(e) => setEditForm({ ...editForm, gender: e.target.value === "true" })}
-                  className="border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:border-yellow-400"
+                  disabled={modalLoading}
+                  className="border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:border-yellow-400 disabled:opacity-50"
                 >
                   <option value="true">Erkak</option>
                   <option value="false">Ayol</option>
@@ -528,7 +612,8 @@ const fetchStudents = async () => {
                 <select
                   value={editForm.classe_id}
                   onChange={(e) => setEditForm({ ...editForm, classe_id: Number(e.target.value) })}
-                  className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
+                  disabled={modalLoading}
+                  className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400 disabled:opacity-50"
                   required
                 >
                   <option value={0}>Sinfni tanlang</option>
@@ -543,16 +628,25 @@ const fetchStudents = async () => {
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="px-4 py-2 rounded bg-[#2a2a2a] hover:bg-[#333] border border-gray-600 transition"
+                  disabled={modalLoading}
+                  className="px-4 py-2 rounded bg-[#2a2a2a] hover:bg-[#333] border border-gray-600 transition disabled:opacity-50"
                 >
                   Bekor qilish
                 </button>
                 <button
                   type="button"
                   onClick={handleUpdate}
-                  className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-400 text-black font-semibold shadow-md"
+                  disabled={modalLoading}
+                  className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-400 text-black font-semibold shadow-md disabled:opacity-50 flex items-center gap-2"
                 >
-                  Saqlash
+                  {modalLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                      Yangilanmoqda...
+                    </>
+                  ) : (
+                    "Saqlash"
+                  )}
                 </button>
               </div>
             </div>
@@ -560,6 +654,7 @@ const fetchStudents = async () => {
         )}
       </AnimatePresence>
 
+      {/* O'chirish modali */}
       <AnimatePresence>
         {showDeleteModal && (
           <ModalWrapper onClose={() => setShowDeleteModal(false)} title="⚠️ O'quvchini o'chirish">
@@ -572,15 +667,24 @@ const fetchStudents = async () => {
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 rounded bg-[#2a2a2a] hover:bg-[#333] border border-gray-600 transition"
+                disabled={modalLoading}
+                className="px-4 py-2 rounded bg-[#2a2a2a] hover:bg-[#333] border border-gray-600 transition disabled:opacity-50"
               >
                 Bekor qilish
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 rounded bg-red-500 hover:bg-red-400 text-white font-semibold"
+                disabled={modalLoading}
+                className="px-4 py-2 rounded bg-red-500 hover:bg-red-400 text-white font-semibold disabled:opacity-50 flex items-center gap-2"
               >
-                O'chirish
+                {modalLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    O'chirilmoqda...
+                  </>
+                ) : (
+                  "O'chirish"
+                )}
               </button>
             </div>
           </ModalWrapper>

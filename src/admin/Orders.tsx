@@ -264,7 +264,7 @@ const Orders = () => {
             </tr>) : paginated.length === 0 ? (
               <tr>
                 <td colSpan={7} className="p-8 text-center text-gray-400">
-                  Ma'lumot topilmadi
+                  Buyurtmalar mavjud emas
                 </td>
               </tr>
             ) : (

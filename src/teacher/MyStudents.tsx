@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import ImportButton from "../components/Import";
 
 interface User {
-  id: number;
+  student_id: number;
   first_name: string;
   last_name: string;
   username: string;
@@ -16,6 +16,7 @@ interface User {
   classe_id: number;
   classe: Class;
   password: string | number;
+  classe_name:string;
 }
 
 interface Class {
@@ -26,7 +27,6 @@ interface Class {
 
 const MyStudents = () => {
   const [students, setStudents] = useState<User[]>([]);
-  const [myClass, setMyClass] = useState<Class | null>(null);
   const [classes, setClasses] = useState<Class[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -39,6 +39,7 @@ const MyStudents = () => {
   const [showClassModal, setShowClassModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
+  const [selectedClassName, setSelectedClassName] = useState<string | null>(null);
 
   const [addForm, setAddForm] = useState({
     first_name: "",
@@ -67,10 +68,10 @@ const MyStudents = () => {
     try {
       setLoading(true);
       const res = await getMyStudents();
-      const studentss = res.data.students;
-      setMyClass(res.data.classe);
+      const studentss = res.data;
       setStudents(studentss);
       setLoading(false);
+      console.log(res)
     } catch (err) {
       setLoading(false);
       toast.error("O'quvchilarni yuklashda xatolik!");
@@ -97,6 +98,7 @@ const MyStudents = () => {
     try {
       const res = await getClasses();
       setClasses(res.data);
+      console.log(res)
     } catch (err) {
       toast.error("Sinflarni yuklashda xatolik!");
     }
@@ -171,7 +173,13 @@ const MyStudents = () => {
     if (!selectedStudent) return;
     try {
       setModalLoading(true);
-      await deleteUser(selectedStudent);
+      const iddd= selectedStudent.student_id
+      const userAddd = {
+        id:iddd
+      }
+      const res =await deleteUser(userAddd);
+
+      console.log(res)
       toast.success("O'quvchi o'chirildi!");
       setShowDeleteModal(false);
       setSelectedStudent(null);
@@ -193,7 +201,7 @@ const MyStudents = () => {
 
     try {
       setModalLoading(true);
-      await updatePassword(selectedUser.id, resetPasswordValue);
+      await updatePassword(selectedUser.student_id, resetPasswordValue);
       toast.success("Parol muvaffaqiyatli tiklandi!");
       setResetModal(false);
       setSelectedUser(null);
@@ -206,21 +214,18 @@ const MyStudents = () => {
     }
   };
 
-  const getClassName = (classId: number) => {
-    const foundClass = classes.find((c) => c.id === classId);
-    return foundClass ? foundClass.name : "Sinf topilmadi";
-  };
+  // Unique class names
+  const uniqueClasses = Array.from(new Set(students.map(s => s.classe_name))).filter(Boolean);
 
-  // Faqat o'z sinfi o'quvchilarini filter qilish
+  // Filter by selected class and search
   const filteredStudents = students.filter((student) => {
     const matchesSearch =
       student.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.last_name.toLowerCase().includes(searchTerm.toLowerCase());
 
-    // Faqat o'z sinfidagi o'quvchilar
-    const isMyStudent = myClass ? student.classe?.id === myClass.id : true;
+    const matchesClass = selectedClassName ? student.classe_name === selectedClassName : true;
 
-    return matchesSearch && isMyStudent;
+    return matchesSearch && matchesClass;
   });
 
   const totalPages = Math.ceil(filteredStudents.length / perPage);
@@ -233,11 +238,9 @@ const MyStudents = () => {
           <h1 className="text-3xl font-bold text-yellow-400 tracking-wide">
             O'quvchilar ro'yxati
           </h1>
-          {myClass && (
-            <p className="text-gray-400 mt-2">
-              {myClass.name} sinfi - Jami: {filteredStudents.length} ta o'quvchi
-            </p>
-          )}
+          <p className="text-gray-400 mt-2">
+            Jami: {filteredStudents.length} ta o'quvchi
+          </p>
         </div>
         <div className="flex gap-3 items-center">
           <motion.button
@@ -258,6 +261,36 @@ const MyStudents = () => {
             <FaPlus /> Sinf qo'shish
           </motion.button>
         </div>
+      </div>
+
+      {/* Class Filter Cards */}
+      <div className="mb-6 flex gap-3 flex-wrap">
+        
+
+        {uniqueClasses.map((className) => {
+          const count = students.filter(s => s.classe_name === className).length;
+          return (
+            <motion.button
+              key={className}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                setSelectedClassName(className);
+                setCurrentPage(1);
+              }}
+              className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+                selectedClassName === className
+                  ? "bg-yellow-500 text-black shadow-lg"
+                  : "bg-[#2a2a2a] text-gray-300 hover:bg-[#333] border border-gray-700"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span>{className}</span>
+                <span className="ml-1 text-sm opacity-80">({count})</span>
+              </div>
+            </motion.button>
+          );
+        })}
       </div>
 
       <div className="mb-6 flex gap-4 items-center bg-[#212121]/90 p-4 rounded-xl border border-gray-700">
@@ -317,7 +350,7 @@ const MyStudents = () => {
             ) : (
               paginated.map((s, i) => (
                 <motion.tr
-                  key={s.id}
+                  key={s.student_id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.03 }}
@@ -330,14 +363,14 @@ const MyStudents = () => {
                   <td className="p-3 text-gray-100">{s.ball}</td>
                   <td className="p-3 text-gray-400">{s.gender ? "Erkak" : "Ayol"}</td>
                   <td className="p-3 text-yellow-400 font-semibold">
-                    {s.classe ? getClassName(s.classe.id) : "Sinf yo'q"}
+                    {s.classe_name}
                   </td>
                   <td className="p-3 flex justify-center gap-4">
                     <button
                       onClick={() => {
                         setSelectedStudent(s);
                         setEditForm({
-                          id: s.id,
+                          id: s.student_id,
                           first_name: s.first_name,
                           last_name: s.last_name,
                           gender: s.gender,

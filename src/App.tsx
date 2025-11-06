@@ -19,21 +19,23 @@ import Cart from "./student/Cart";
 import Profile from "./student/Profile";
 import Market from "./student/Market";
 import NotFound from "./components/404";
+import ClassStudents from "./admin/class_students";
 
 const App = () => {
   const router = createBrowserRouter([
     {
       path: "/",
       element: <RouterLayout />,
-      errorElement: <NotFound />,
       children: [
         { index: true, element: <Home /> },
+        {path:"*",element:<NotFound/>},
         { path: "/login", element: <Login /> },
-        { path: "/classes", element: <Classes /> },
-        { path: "/students", element: <Students /> },
-        { path: "/teachers", element: <Teachers /> },
-        { path: "/shop", element: <Shop /> },
-        { path: "/orders", element: <Orders /> },
+        { path: "/classes", element:<ProtectedRoute allowedRole="1"><Classes /></ProtectedRoute>  },
+        { path: "/students", element:<ProtectedRoute allowedRole="1"><Students/></ProtectedRoute> },
+        { path: "/teachers", element:<ProtectedRoute allowedRole="1"> <Teachers /></ProtectedRoute> },
+        { path: "/shop", element: <ProtectedRoute allowedRole="1"><Shop /></ProtectedRoute> },
+        { path: "/orders", element:<ProtectedRoute allowedRole="1"> <Orders /> </ProtectedRoute>},
+        { path: "/class-students/:id", element:<ProtectedRoute allowedRole="2"> <ClassStudents /> </ProtectedRoute>},
         {
           path: "/dashboard/teacher",
           element: (
@@ -58,6 +60,7 @@ const App = () => {
       path: "/",
       element: <ProtectedRoute allowedRole="3"><StudentLayout /></ProtectedRoute>,
       children: [
+        {path:"*",element:<NotFound/>},
         { path: "/market", element: <Market /> },
         { path: "/my-orders", element: <Order /> },
         { path: "/my-favourite", element: <Favourite /> },

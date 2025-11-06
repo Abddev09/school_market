@@ -102,7 +102,7 @@ const Cart = () => {
 
   const handleOrder = async () => {
     const today = new Date();
-    const allowedDate = new Date(2026, 4, 25);
+    const allowedDate = new Date(2026, 4, 20);
 
     const isSameDay =
       today.getFullYear() === allowedDate.getFullYear() &&
@@ -110,7 +110,7 @@ const Cart = () => {
       today.getDate() === allowedDate.getDate();
 
     if (!isSameDay) {
-      toast.warning("⚠️ Bugun buyurtma berib bo'lmaydi! Faqat 6-Noyabr 2025 kuni mumkin!");
+      toast.warning("⚠️ Bugun buyurtma berib bo'lmaydi! Faqat 2026-yil 20-May kuni xarid qilish mumkin!");
       return;
     }
 

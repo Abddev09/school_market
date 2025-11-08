@@ -62,7 +62,7 @@ const Home = () => {
             alt="logo"
             className="h-14 rounded-full drop-shadow-[0_0_10px_rgba(212,175,55,0.6)] hover:scale-110 transition-transform"
           />
-          <p className="font-bold text-xl">
+          <p className="font-bold text-xl max-ms:text-xs">
             Toshkent shahar Yashnabod tumani 255-maktab Humo card
           </p>
           <a href="/login">

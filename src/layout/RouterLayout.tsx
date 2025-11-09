@@ -5,18 +5,19 @@ import Navbar from "../components/navbar";
 import { FaBars, FaTimes } from "react-icons/fa";
 import LogoutModal from "../components/LogoutModal";
 
-const DashboardLayout: React.FC = () => {
+interface DashboardLayoutProps {
+  isPublic?: boolean;          // login, home va 404 sahifa uchun
+  children?: React.ReactNode;
+}
+
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ isPublic,children }) => {
   const location = useLocation();
   const isHome = location.pathname === "/login" || location.pathname === "/";
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  if (isHome) {
-    return (
-      <main className="flex-1 overflow-y-hidden">
-        <Outlet />
-      </main>
-    );
+  if (isHome || isPublic) {
+    return <main className="flex-1 overflow-y-hidden">{children ?? <Outlet />}</main>;
   }
 
   return (
@@ -86,7 +87,7 @@ const DashboardLayout: React.FC = () => {
               : "p-6 max-md:p-4 max-md:pt-22"
           }`}
         >
-          <Outlet />
+         {children ?? <Outlet />}
         </main>
       </div>
     </div>

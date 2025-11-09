@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import RouterLayout from "./layout/RouterLayout";
 import StudentLayout from "./layout/StudentLayout";
+import DashboardLayout from "./layout/RouterLayout";
 
 import Login from "./auth/login";
 import ProtectedRoute from "./components/RoleCounter";
@@ -19,59 +20,85 @@ import Cart from "./student/Cart";
 import Profile from "./student/Profile";
 import Market from "./student/Market";
 import NotFound from "./components/404";
+import HelemtProviders from "./components/HelmetProvide";
 
 const App = () => {
   const router = createBrowserRouter([
+    // Public Routes
     {
       path: "/",
       element: <RouterLayout />,
       children: [
         { index: true, element: <Home /> },
-        {path:"*",element:<NotFound/>},
         { path: "/login", element: <Login /> },
-        { path: "/classes", element:<ProtectedRoute allowedRole="1"><Classes /></ProtectedRoute>  },
-        { path: "/students", element:<ProtectedRoute allowedRole="1"><Students/></ProtectedRoute> },
-        { path: "/teachers", element:<ProtectedRoute allowedRole="1"> <Teachers /></ProtectedRoute> },
-        { path: "/shop", element: <ProtectedRoute allowedRole="1"><Shop /></ProtectedRoute> },
-        { path: "/orders", element:<ProtectedRoute allowedRole="1"> <Orders /> </ProtectedRoute>},
-        {
-          path: "/dashboard/teacher",
-          element: (
-            <ProtectedRoute allowedRole="2">
-              <Teacher />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: "/my-students", // teacher uchun, student emas
-          element: (
-            <ProtectedRoute allowedRole="2">
-              <MyStudents />
-            </ProtectedRoute>
-          ),
-        },
       ],
     },
 
-    // 🎓 Student Layout uchun alohida branch
+    // Admin Dashboard Routes
     {
       path: "/",
-      element: <ProtectedRoute allowedRole="3"><StudentLayout /></ProtectedRoute>,
+      element: (
+        <ProtectedRoute allowedRole="1">
+          <DashboardLayout />
+        </ProtectedRoute>
+      ),
       children: [
-        {path:"*",element:<NotFound/>},
+        { path: "/classes", element: <Classes /> },
+        { path: "/students", element: <Students /> },
+        { path: "/teachers", element: <Teachers /> },
+        { path: "/shop", element: <Shop /> },
+        { path: "/orders", element: <Orders /> },
+        // 404 sahifa admin dashboard ichida
+        { path: "*", element: <DashboardLayout isPublic>
+      <NotFound />
+    </DashboardLayout> },
+      ],
+    },
+
+    // Teacher Dashboard Routes
+    {
+      path: "/",
+      element: (
+        <ProtectedRoute allowedRole="2">
+          <DashboardLayout />
+        </ProtectedRoute>
+      ),
+      children: [
+        { path: "/dashboard/teacher", element: <Teacher /> },
+        { path: "/my-students", element: <MyStudents /> },
+        { path: "*", element: <DashboardLayout isPublic>
+      <NotFound />
+    </DashboardLayout> }, // teacher 404
+      ],
+    },
+
+    // Student Layout Routes
+    {
+      path: "/",
+      element: (
+        <ProtectedRoute allowedRole="3">
+          <StudentLayout />
+        </ProtectedRoute>
+      ),
+      children: [
         { path: "/market", element: <Market /> },
         { path: "/my-orders", element: <Order /> },
         { path: "/my-favourite", element: <Favourite /> },
         { path: "/my-cart", element: <Cart /> },
         { path: "/my-profile", element: <Profile /> },
+        { path: "*", element: <DashboardLayout isPublic>
+      <NotFound />
+    </DashboardLayout> }, // student 404
       ],
     },
   ]);
 
   return (
     <>
+    <HelemtProviders>
       <Toaster richColors position="top-center" />
       <RouterProvider router={router} />
+    </HelemtProviders>
     </>
   );
 };

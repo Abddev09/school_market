@@ -20,7 +20,6 @@ import Cart from "./student/Cart";
 import Profile from "./student/Profile";
 import Market from "./student/Market";
 import NotFound from "./components/404";
-import HelemtProviders from "./components/HelmetProvide";
 
 const App = () => {
   const router = createBrowserRouter([
@@ -95,10 +94,8 @@ const App = () => {
 
   return (
     <>
-    <HelemtProviders>
-      <Toaster richColors position="top-center" />
+    <Toaster position="top-center"/>
       <RouterProvider router={router} />
-    </HelemtProviders>
     </>
   );
 };

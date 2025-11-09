@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FaTelegramPlane, FaInstagram, FaYoutube } from "react-icons/fa";
+import HelemtProviders from "../components/HelmetProvide";
 
 const Home = () => {
   const [name, setName] = useState("");
@@ -56,7 +57,9 @@ const Home = () => {
   };
 
   return (
-    <div className="bg-linear-to-b from-black to-[#0d0d0d] text-white overflow-x-hidden font-sans">
+    <>
+      <HelemtProviders>
+        <div className="bg-linear-to-b from-black to-[#0d0d0d] text-white overflow-x-hidden font-sans">
       {/* TOAST NOTIFICATION */}
       {toast.show && (
         <div className={`fixed top-20 right-4 max-md:right-2 max-md:left-2 z-60 px-6 py-4 max-md:px-4 max-md:py-3 rounded-lg shadow-2xl animate-pulse ${
@@ -229,6 +232,8 @@ const Home = () => {
         </div>
       </footer>
     </div>
+      </HelemtProviders>
+    </>
   );
 };
 

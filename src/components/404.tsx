@@ -1,11 +1,14 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Home } from "lucide-react";
+import HelemtProviders from "./HelmetProvide";
 
 const NotFound = () => {
   const navigate = useNavigate();
 
   return (
+    <HelemtProviders>
+
     <div className="fixed inset-0 flex items-center justify-center  bg-black/80">
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
@@ -28,6 +31,7 @@ const NotFound = () => {
         </button>
       </motion.div>
     </div>
+    </HelemtProviders>
   );
 };
 

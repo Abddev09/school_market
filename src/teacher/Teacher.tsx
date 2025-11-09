@@ -153,7 +153,7 @@ const Teacher = () => {
   const paginated = filteredStudents.slice((currentPage - 1) * perPage, currentPage * perPage);
 
   return (
-    <div className="p-6 max-md:p-4 bg-gradient-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-2xl max-md:rounded-xl">
+    <div className="p-6 max-md:p-4 bg-linear-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-2xl max-md:rounded-xl">
       {/* Header */}
       <div className="flex justify-between items-start mb-6 max-md:mb-4 gap-4">
         <div className="flex-1">

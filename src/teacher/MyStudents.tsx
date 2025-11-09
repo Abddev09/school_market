@@ -239,7 +239,7 @@ const MyStudents = () => {
   const paginated = filteredStudents.slice((currentPage - 1) * perPage, currentPage * perPage);
 
   return (
-    <div className="p-3 sm:p-4 md:p-6 bg-gradient-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-xl md:rounded-2xl">
+    <div className="p-3 sm:p-4 md:p-6 bg-linear-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-xl md:rounded-2xl">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-6 gap-3">
         <div className="flex justify-between items-center w-full">
@@ -522,7 +522,7 @@ const MyStudents = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start gap-3">
                     {/* Number Badge */}
-                    <div className="flex-shrink-0 w-8 h-8 bg-[#2a2a2a] border border-yellow-500/50 rounded-full flex items-center justify-center">
+                    <div className="shrink-0 w-8 h-8 bg-[#2a2a2a] border border-yellow-500/50 rounded-full flex items-center justify-center">
                       <span className="text-gray-300 font-bold text-xs">
                         {(currentPage - 1) * perPage + i + 1}
                       </span>
@@ -940,7 +940,7 @@ const ModalWrapper = ({
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
-    className="fixed inset-0 flex items-center justify-center bg-black/70 z-[9998] backdrop-blur-sm px-4"
+    className="fixed inset-0 flex items-center justify-center bg-black/70 z-9998 backdrop-blur-sm px-4"
     onClick={onClose}
   >
     <motion.div

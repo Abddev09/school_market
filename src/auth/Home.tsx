@@ -56,10 +56,10 @@ const Home = () => {
   };
 
   return (
-    <div className="bg-gradient-to-b from-black to-[#0d0d0d] text-white overflow-x-hidden font-sans">
+    <div className="bg-linear-to-b from-black to-[#0d0d0d] text-white overflow-x-hidden font-sans">
       {/* TOAST NOTIFICATION */}
       {toast.show && (
-        <div className={`fixed top-20 right-4 max-md:right-2 max-md:left-2 z-[60] px-6 py-4 max-md:px-4 max-md:py-3 rounded-lg shadow-2xl animate-pulse ${
+        <div className={`fixed top-20 right-4 max-md:right-2 max-md:left-2 z-60 px-6 py-4 max-md:px-4 max-md:py-3 rounded-lg shadow-2xl animate-pulse ${
           toast.type === "success" ? "bg-green-600" : toast.type === "warning" ? "bg-yellow-600" : "bg-red-600"
         }`}>
           <p className="text-white font-semibold max-md:text-sm">{toast.message}</p>
@@ -156,7 +156,7 @@ const Home = () => {
               ></textarea>
               <button
                 onClick={handleSubmit}
-                className="bg-gradient-to-r from-yellow-400 to-yellow-200 text-black font-semibold px-6 py-2 max-md:px-5 max-md:py-2 max-md:text-sm rounded-lg hover:scale-105 hover:shadow-[0_0_20px_gold] transition-transform w-full max-md:w-auto"
+                className="bg-linear-to-r from-yellow-400 to-yellow-200 text-black font-semibold px-6 py-2 max-md:px-5 max-md:py-2 max-md:text-sm rounded-lg hover:scale-105 hover:shadow-[0_0_20px_gold] transition-transform w-full max-md:w-auto"
               >
                 Yuborish
               </button>
@@ -174,7 +174,7 @@ const Home = () => {
       </button>
 
       {/* FOOTER */}
-      <footer className="bg-gradient-to-b from-black to-[#0c0c0c] border-t border-yellow-900 mt-20 max-md:mt-12">
+      <footer className="bg-linear-to-b from-black to-[#0c0c0c] border-t border-yellow-900 mt-20 max-md:mt-12">
         <div className="max-w-[1200px] mx-auto px-4 max-md:px-3 py-12 max-md:py-8 flex flex-wrap justify-between gap-10 max-md:gap-6 max-md:justify-center">
           <div className="max-md:text-center max-md:w-full">
             <img

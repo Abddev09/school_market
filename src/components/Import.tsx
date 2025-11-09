@@ -52,7 +52,7 @@ const ImportButton = ({ onImported }: { onImported: (data: any[]) => void }) => 
         onClick={handleFileSelect}
         className="flex items-center gap-2 max-md:rounded-none max-md:text-[13px] max-md:w-full bg-yellow-500 hover:bg-yellow-400 text-black font-semibold px-4 py-2 rounded-lg shadow-md transition"
       >
-        <FaPlus /> O‘quvchilarni Import qilish
+        <FaPlus /> O'quvchilarni Import qilish
       </motion.button>
 
       {/* Ko‘rinmas input */}
@@ -70,7 +70,7 @@ const ImportButton = ({ onImported }: { onImported: (data: any[]) => void }) => 
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-gradient-to-b from-[#2a2a2a] to-[#313131]  text-gray-100 rounded-xl shadow-2xl w-[90%] max-w-3xl p-6"
+            className="bg-linear-to-b from-[#2a2a2a] to-[#313131]  text-gray-100 rounded-xl shadow-2xl w-[90%] max-w-3xl p-6"
           >
             <h2 className="text-xl font-bold mb-4">Import qilingan o‘quvchilar</h2>
             <div className="max-h-80 overflow-y-auto">

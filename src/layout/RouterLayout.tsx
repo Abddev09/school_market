@@ -22,38 +22,37 @@ const DashboardLayout: React.FC = () => {
   return (
     <div className="min-h-screen flex bg-linear-to-b from-[black]/70 to-[#090909] text-gray-100">
       {/* Mobile Menu Button */}
-      {location.pathname !== "/login" && location.pathname !== "/" && (
-        <div className="fixed bg-linear-to-b from-[black]/50 to-[#090909] py-1 px-5 backdrop-blur-2xl top-0 left-0 z-50 md:hidden w-full flex justify-between items-center">
-        <div className="px-6 max-md:px-4 py-6 max-md:py-4 border-b border-white/5">
-            <div className="flex items-center gap-3 max-md:gap-2">
-              <img
-                src="/logo.png"
-                alt="logo"
-                className="h-12 max-md:h-10 rounded-full drop-shadow-[0_0_12px_rgba(212,175,55,0.5)]"
-              />
-              <div>
-                <h1 className="text-xl max-md:text-lg font-bold tracking-wide text-white">
-                  255-Maktab
-                </h1>
-                <p className="text-xs max-md:text-[10px] text-gray-400">School Market</p>
-              </div>
-            </div>
-          </div>
-        <button
-          onClick={() => setSidebarOpen((s) => !s)}
-          aria-label="Toggle menu"
-          className="p-3 max-md:p-2.5 rounded-lg bg-white/5 backdrop-blur-sm border border-white/5 hover:bg-white/10 transition"
-        >
-          {sidebarOpen ? (
-            <FaTimes className="text-yellow-400 text-xl max-md:text-lg" />
-          ) : (
-            <FaBars className="text-yellow-400 text-xl max-md:text-lg" />
-          )}
-        </button>
+      {/* Mobile Menu Button */}
+{!isHome && (
+  <div className="fixed bg-linear-to-b from-[black]/50 to-[#090909] py-1 px-5 backdrop-blur-2xl top-0 left-0 z-50 md:hidden w-full flex justify-between items-center">
+    <div className="px-6 max-md:px-4 py-6 max-md:py-4 border-b border-white/5">
+      <div className="flex items-center gap-3 max-md:gap-2">
+        <img
+          src="/logo.png"
+          alt="logo"
+          className="h-12 max-md:h-10 rounded-full drop-shadow-[0_0_12px_rgba(212,175,55,0.5)]"
+        />
+        <div>
+          <h1 className="text-xl max-md:text-lg font-bold tracking-wide text-white">
+            255-Maktab
+          </h1>
+          <p className="text-xs max-md:text-[10px] text-gray-400">School Market</p>
+        </div>
       </div>
-      )
-
-      }
+    </div>
+    <button
+      onClick={() => setSidebarOpen((s) => !s)}
+      aria-label="Toggle menu"
+      className="p-3 max-md:p-2.5 rounded-lg bg-white/5 backdrop-blur-sm border border-white/5 hover:bg-white/10 transition"
+    >
+      {sidebarOpen ? (
+        <FaTimes className="text-yellow-400 text-xl max-md:text-lg" />
+      ) : (
+        <FaBars className="text-yellow-400 text-xl max-md:text-lg" />
+      )}
+    </button>
+  </div>
+)}
 
       {/* Sidebar */}
       {!isHome && (

@@ -235,7 +235,7 @@ const Teachers = () => {
 
       
            {/* Table */}
-      <div className="overflow-x-auto rounded-xl shadow-lg bg-[#212121]/90 backdrop-blur-md border border-gray-700">
+      <div className="overflow-x-auto rounded-xl shadow-lg bg-[#212121]/90 backdrop-blur-md border border-gray-700 overflow-scroll">
         <table className="w-full text-left text-sm">
           <thead className="bg-[#2a2a2a] text-yellow-400 uppercase text-xs font-semibold">
             <tr>

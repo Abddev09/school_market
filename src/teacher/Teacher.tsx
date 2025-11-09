@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { FaPlus, FaEllipsisV, FaTimes } from "react-icons/fa";
 import { createClass, createGrade, createUser, getMyStudents, getOneUsers } from "../hooks/apis";
+import ImportButton from "../components/Import";
 
 interface Student {
   id: number;
@@ -10,8 +12,8 @@ interface Student {
   gender: boolean;
   username: string;
   classe: Class;
-  student_id:number;
-  classe_name:string;
+  student_id: number;
+  classe_name: string;
 }
 
 interface Class {
@@ -27,6 +29,7 @@ const Teacher = () => {
   const [gradeInputs, setGradeInputs] = useState<{ [key: number]: string }>({});
   const [showClassModal, setShowClassModal] = useState(false);
   const [showStudentModal, setShowStudentModal] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [newClassName, setNewClassName] = useState("");
   const [teacherDetail, setTeacher] = useState<Student | null>(null);
   const [selectedClassName, setSelectedClassName] = useState<string | null>(null);
@@ -91,7 +94,7 @@ const Teacher = () => {
       const students = res.data;
       setMyClass(res.data);
       setStudents(students);
-      console.log(res)
+      console.log(res);
     } catch (err) {
       toast.error("O'quvchilarni yuklashda xatolik!");
     }
@@ -103,20 +106,19 @@ const Teacher = () => {
   }, []);
 
   const handleGradeInputChange = (studentId: number, value: string) => {
-    // Faqat raqamlarni qabul qilish
     const numericValue = value.replace(/[^0-9]/g, "");
-    setGradeInputs(prev => ({ ...prev, [studentId]: numericValue }));
+    setGradeInputs((prev) => ({ ...prev, [studentId]: numericValue }));
   };
 
   const handleGiveGrade = async (studentId: number) => {
     const grade = parseInt(gradeInputs[studentId] || "0");
-    
+
     if (!grade || grade < 1 || grade > 10) {
       toast.error("Bahoni 1 dan 10 gacha kiriting!");
       return;
     }
 
-    setLoading(prev => ({ ...prev, [studentId]: true }));
+    setLoading((prev) => ({ ...prev, [studentId]: true }));
 
     try {
       const data = {
@@ -126,20 +128,17 @@ const Teacher = () => {
       await createGrade(data);
 
       toast.success(`${grade} ball baho qo'yildi!`);
-      
-      // Inputni tozalash
-      setGradeInputs(prev => ({ ...prev, [studentId]: "" }));
+      setGradeInputs((prev) => ({ ...prev, [studentId]: "" }));
     } catch (error) {
       console.error("Baho qo'yishda xatolik:", error);
       toast.error("Baho qo'yishda xatolik!");
     } finally {
-      setLoading(prev => ({ ...prev, [studentId]: false }));
+      setLoading((prev) => ({ ...prev, [studentId]: false }));
     }
   };
 
-  const uniqueClasses = Array.from(new Set(students.map(s => s.classe_name))).filter(Boolean);
+  const uniqueClasses = Array.from(new Set(students.map((s) => s.classe_name))).filter(Boolean);
 
-  // Filter by selected class and search
   const filteredStudents = students.filter((student) => {
     const matchesSearch =
       student.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -150,30 +149,77 @@ const Teacher = () => {
     return matchesSearch && matchesClass;
   });
 
-
   const totalPages = Math.ceil(filteredStudents.length / perPage);
   const paginated = filteredStudents.slice((currentPage - 1) * perPage, currentPage * perPage);
 
   return (
-    <div className="p-6 bg-gradient-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-2xl">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-yellow-400 tracking-wide mb-2">
+    <div className="p-6 max-md:p-4 bg-gradient-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-2xl max-md:rounded-xl">
+      {/* Header */}
+      <div className="flex justify-between items-start mb-6 max-md:mb-4 gap-4">
+        <div className="flex-1">
+          <h1 className="text-3xl max-md:text-xl font-bold text-yellow-400 tracking-wide mb-2 max-md:mb-1">
             {teacherDetail ? (
-              <p className="text-lg text-gray-300">
+              <p className="text-lg max-md:text-base text-gray-300">
                 Sinf rahbari: {teacherDetail.first_name} {teacherDetail.last_name}
               </p>
             ) : (
-              <p>Yuklanmoqda...</p>
+              <p className="max-md:text-base">Yuklanmoqda...</p>
             )}
           </h1>
-          <p className="text-gray-400">Jami: {students.length} ta o'quvchi</p>
-           {/* Class Filter Cards */}
-      <div className="mb-6 mt-5 flex gap-3 flex-wrap">
-        
+          <p className="text-gray-400 max-md:text-sm">Jami: {students.length} ta o'quvchi</p>
+        </div>
 
+        {/* Mobile Menu Button */}
+        <div className="md:hidden max-md:hidden relative">
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="p-3 bg-yellow-500 text-black rounded-lg hover:bg-yellow-400 transition"
+          >
+            {showMobileMenu ? <FaTimes size={20} /> : <FaEllipsisV size={20} />}
+          </button>
+
+          {/* Mobile Dropdown Menu */}
+          <AnimatePresence>
+            {showMobileMenu && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="absolute right-0 top-14 bg-[#1e1e1e] border border-gray-700 rounded-xl shadow-2xl z-50 min-w-[200px] overflow-hidden"
+              >
+                <button
+                  onClick={() => {
+                    setShowStudentModal(true);
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-yellow-500/10 text-left text-sm transition border-b border-gray-700"
+                >
+                  <FaPlus className="text-yellow-400" />
+                  <span>O'quvchi qo'shish</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowClassModal(true);
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-yellow-500/10 text-left text-sm transition border-b border-gray-700"
+                >
+                  <FaPlus className="text-yellow-400" />
+                  <span>Sinf qo'shish</span>
+                </button>
+                <div className="px-4 py-3 hover:bg-yellow-500/10">
+                  <ImportButton onImported={(data) => console.log("Import:", data)} />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Class Filter Cards */}
+      <div className="mb-6 max-md:mb-4 flex gap-3 max-md:gap-2 flex-wrap">
         {uniqueClasses.map((className) => {
-          const count = students.filter(s => s.classe_name === className).length;
+          const count = students.filter((s) => s.classe_name === className).length;
           return (
             <motion.button
               key={className}
@@ -183,7 +229,7 @@ const Teacher = () => {
                 setSelectedClassName(className);
                 setCurrentPage(1);
               }}
-              className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+              className={`px-6 max-md:px-4 py-3 max-md:py-2 rounded-xl max-md:rounded-lg font-semibold max-md:text-sm transition-all ${
                 selectedClassName === className
                   ? "bg-yellow-500 text-black shadow-lg"
                   : "bg-[#2a2a2a] text-gray-300 hover:bg-[#333] border border-gray-700"
@@ -191,18 +237,16 @@ const Teacher = () => {
             >
               <div className="flex items-center gap-2">
                 <span>{className}</span>
-                <span className="ml-1 text-sm opacity-80">({count})</span>
+                <span className="ml-1 text-sm max-md:text-xs opacity-80">({count})</span>
               </div>
             </motion.button>
           );
         })}
       </div>
-        </div>
-        
-      </div>
 
-      <div className="mb-6 flex gap-4 items-center bg-[#212121]/90 p-4 rounded-xl border border-gray-700">
-        <div className="flex-1">
+      {/* Search Bar */}
+      <div className="mb-6 max-md:mb-4 flex max-md:flex-col gap-4 max-md:gap-3 items-center bg-[#212121]/90 p-4 max-md:p-3 rounded-xl max-md:rounded-lg border border-gray-700">
+        <div className="flex-1 max-md:w-full">
           <input
             type="text"
             placeholder="Ism, familiya yoki login bo'yicha qidirish..."
@@ -211,7 +255,7 @@ const Teacher = () => {
               setSearchTerm(e.target.value);
               setCurrentPage(1);
             }}
-            className="w-full border border-gray-600 bg-[#2a2a2a] p-3 rounded-lg focus:outline-none focus:border-yellow-400 text-gray-100 placeholder-gray-500"
+            className="w-full border border-gray-600 bg-[#2a2a2a] p-3 max-md:p-2.5 max-md:text-sm rounded-lg focus:outline-none focus:border-yellow-400 text-gray-100 placeholder-gray-500"
           />
         </div>
 
@@ -221,28 +265,29 @@ const Teacher = () => {
               setSearchTerm("");
               setCurrentPage(1);
             }}
-            className="px-4 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition border border-red-500/30 whitespace-nowrap"
+            className="px-4 max-md:px-3 py-3 max-md:py-2.5 max-md:text-sm bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition border border-red-500/30 whitespace-nowrap max-md:w-full"
           >
             Tozalash
           </button>
         )}
       </div>
 
+      {/* Responsive Table */}
       <div className="overflow-x-auto rounded-xl shadow-lg bg-[#212121]/90 backdrop-blur-md border border-gray-700">
         <table className="w-full text-left text-sm">
           <thead className="bg-[#2a2a2a] text-yellow-400 uppercase text-xs font-semibold">
             <tr>
-              <th className="p-3">T/r</th>
-              <th className="p-3">Ism</th>
-              <th className="p-3">Familiya</th>
-              <th className="p-3">Baho (1-10)</th>
-              <th className="p-3 text-center">Amal</th>
+              <th className="p-3 max-md:p-2 max-md:text-[10px]">T/r</th>
+              <th className="p-3 max-md:p-2 max-md:text-[10px]">Ism</th>
+              <th className="p-3 max-md:p-2 max-md:text-[10px]">Familiya</th>
+              <th className="p-3 max-md:p-2 max-md:text-[10px]">Baho</th>
+              <th className="p-3 max-md:p-2 max-md:text-[10px] text-center">Amal</th>
             </tr>
           </thead>
           <tbody>
             {paginated.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-gray-400">
+                <td colSpan={5} className="p-8 max-md:p-6 text-center text-gray-400 max-md:text-sm">
                   Ma'lumot topilmadi
                 </td>
               </tr>
@@ -255,34 +300,38 @@ const Teacher = () => {
                   transition={{ delay: i * 0.03 }}
                   className="border-b border-gray-700 hover:bg-yellow-400/10 transition"
                 >
-                  <td className="p-3 text-gray-300">{i + 1}</td>
-                  <td className="p-3 text-gray-100 font-medium">{student.first_name}</td>
-                  <td className="p-3 text-gray-100 font-medium">{student.last_name}</td>
-                  <td className="p-3">
+                  <td className="p-3 max-md:p-2 text-gray-300 max-md:text-xs">{i + 1}</td>
+                  <td className="p-3 max-md:p-2 text-gray-100 font-medium max-md:text-xs">
+                    {student.first_name}
+                  </td>
+                  <td className="p-3 max-md:p-2 text-gray-100 font-medium max-md:text-xs">
+                    {student.last_name}
+                  </td>
+                  <td className="p-3 max-md:p-2">
                     <input
                       type="text"
                       inputMode="numeric"
                       placeholder="1-10"
                       value={gradeInputs[student.student_id] || ""}
                       onChange={(e) => handleGradeInputChange(student.student_id, e.target.value)}
-                      disabled={loading[student.id]}
-                      className="w-20 bg-[#2a2a2a] border border-gray-600 rounded-lg p-2 text-center focus:outline-none focus:border-yellow-400 text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={loading[student.student_id]}
+                      className="w-20 max-md:w-14 bg-[#2a2a2a] border border-gray-600 rounded-lg p-2 max-md:p-1.5 text-center max-md:text-xs focus:outline-none focus:border-yellow-400 text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                       maxLength={2}
                     />
                   </td>
-                  <td className="p-3 text-center">
+                  <td className="p-3 max-md:p-2 text-center">
                     <button
                       onClick={() => handleGiveGrade(student.student_id)}
                       disabled={loading[student.student_id] || !gradeInputs[student.student_id]}
-                      className="px-4 py-2 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+                      className="px-4 max-md:px-2 py-2 max-md:py-1.5 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold rounded-lg max-md:text-xs transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
                     >
-                      {loading[student.id] ? (
+                      {loading[student.student_id] ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-                          Yuklanmoqda...
+                          <div className="w-4 h-4 max-md:w-3 max-md:h-3 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                          <span className="max-md:hidden">Yuklanmoqda...</span>
                         </>
                       ) : (
-                        "Baholash"
+                        <span>Baholash</span>
                       )}
                     </button>
                   </td>
@@ -293,28 +342,49 @@ const Teacher = () => {
         </table>
       </div>
 
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-6 max-md:mt-4 gap-2 flex-wrap">
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentPage(i + 1)}
+              className={`px-3 max-md:px-2.5 py-1 max-md:py-1 rounded-md text-sm max-md:text-xs font-medium transition ${
+                currentPage === i + 1
+                  ? "bg-yellow-500 text-black"
+                  : "bg-[#2a2a2a] text-gray-300 hover:bg-yellow-400/20"
+              }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Sinf yaratish modali */}
       {showClassModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-[#1e1e1e] p-6 rounded-2xl border border-gray-700 w-[90%] max-w-md">
-            <h3 className="text-xl font-bold text-yellow-400 mb-4">Yangi sinf yaratish</h3>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
+          <div className="bg-[#1e1e1e] p-6 max-md:p-5 rounded-2xl max-md:rounded-xl border border-gray-700 w-[90%] max-w-md">
+            <h3 className="text-xl max-md:text-lg font-bold text-yellow-400 mb-4 max-md:mb-3">
+              Yangi sinf yaratish
+            </h3>
             <input
               type="text"
               placeholder="Sinf nomi..."
               value={newClassName}
               onChange={(e) => setNewClassName(e.target.value)}
-              className="w-full bg-[#2a2a2a] border border-gray-600 rounded-lg p-3 mb-4 focus:outline-none focus:border-yellow-400 text-gray-100"
+              className="w-full bg-[#2a2a2a] border border-gray-600 rounded-lg p-3 max-md:p-2.5 max-md:text-sm mb-4 max-md:mb-3 focus:outline-none focus:border-yellow-400 text-gray-100"
             />
-            <div className="flex justify-end gap-3">
+            <div className="flex max-md:flex-col justify-end gap-3 max-md:gap-2">
               <button
                 onClick={() => setShowClassModal(false)}
-                className="px-4 py-2 bg-gray-700 rounded-lg text-gray-300 hover:bg-gray-600"
+                className="px-4 max-md:px-3 py-2 max-md:py-2 max-md:text-sm bg-gray-700 rounded-lg text-gray-300 hover:bg-gray-600 max-md:w-full"
               >
                 Bekor qilish
               </button>
               <button
                 onClick={handleCreateClass}
-                className="px-4 py-2 bg-yellow-500 text-black rounded-lg font-medium hover:bg-yellow-400"
+                className="px-4 max-md:px-3 py-2 max-md:py-2 max-md:text-sm bg-yellow-500 text-black rounded-lg font-medium hover:bg-yellow-400 max-md:w-full"
               >
                 Yaratish
               </button>
@@ -325,73 +395,57 @@ const Teacher = () => {
 
       {/* O'quvchi qo'shish modali */}
       {showStudentModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-[#1e1e1e] p-6 rounded-2xl border border-gray-700 w-[90%] max-w-lg">
-            <h3 className="text-xl font-bold text-yellow-400 mb-4">Yangi o'quvchi qo'shish</h3>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
+          <div className="bg-[#1e1e1e] p-6 max-md:p-5 rounded-2xl max-md:rounded-xl border border-gray-700 w-[90%] max-w-lg">
+            <h3 className="text-xl max-md:text-lg font-bold text-yellow-400 mb-4 max-md:mb-3">
+              Yangi o'quvchi qo'shish
+            </h3>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 max-md:grid-cols-1 gap-4 max-md:gap-3">
               <input
                 placeholder="Ism"
                 value={newStudent.first_name}
                 onChange={(e) => setNewStudent({ ...newStudent, first_name: e.target.value })}
-                className="bg-[#2a2a2a] border border-gray-600 rounded-lg p-3 text-gray-100"
+                className="bg-[#2a2a2a] border border-gray-600 rounded-lg p-3 max-md:p-2.5 max-md:text-sm text-gray-100"
               />
               <input
                 placeholder="Familiya"
                 value={newStudent.last_name}
                 onChange={(e) => setNewStudent({ ...newStudent, last_name: e.target.value })}
-                className="bg-[#2a2a2a] border border-gray-600 rounded-lg p-3 text-gray-100"
+                className="bg-[#2a2a2a] border border-gray-600 rounded-lg p-3 max-md:p-2.5 max-md:text-sm text-gray-100"
               />
               <input
                 placeholder="Parol"
                 type="password"
                 value={newStudent.password}
                 onChange={(e) => setNewStudent({ ...newStudent, password: e.target.value })}
-                className="bg-[#2a2a2a] col-span-2 border border-gray-600 rounded-lg p-3 text-gray-100"
+                className="bg-[#2a2a2a] col-span-2 max-md:col-span-1 border border-gray-600 rounded-lg p-3 max-md:p-2.5 max-md:text-sm text-gray-100"
               />
               <select
                 value={newStudent.gender ? "1" : "0"}
                 onChange={(e) => setNewStudent({ ...newStudent, gender: e.target.value === "1" })}
-                className="col-span-2 bg-[#2a2a2a] border border-gray-600 rounded-lg p-3 text-gray-100"
+                className="col-span-2 max-md:col-span-1 bg-[#2a2a2a] border border-gray-600 rounded-lg p-3 max-md:p-2.5 max-md:text-sm text-gray-100"
               >
                 <option value="1">Erkak</option>
                 <option value="0">Ayol</option>
               </select>
             </div>
 
-            <div className="flex justify-end gap-3 mt-5">
+            <div className="flex max-md:flex-col justify-end gap-3 max-md:gap-2 mt-5 max-md:mt-4">
               <button
                 onClick={() => setShowStudentModal(false)}
-                className="px-4 py-2 bg-gray-700 rounded-lg text-gray-300 hover:bg-gray-600"
+                className="px-4 max-md:px-3 py-2 max-md:py-2 max-md:text-sm bg-gray-700 rounded-lg text-gray-300 hover:bg-gray-600 max-md:w-full"
               >
                 Bekor qilish
               </button>
               <button
                 onClick={handleCreateStudent}
-                className="px-4 py-2 bg-yellow-500 text-black rounded-lg font-medium hover:bg-yellow-400"
+                className="px-4 max-md:px-3 py-2 max-md:py-2 max-md:text-sm bg-yellow-500 text-black rounded-lg font-medium hover:bg-yellow-400 max-md:w-full"
               >
                 Qo'shish
               </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-6 gap-2">
-          {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentPage(i + 1)}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition ${
-                currentPage === i + 1
-                  ? "bg-yellow-500 text-black"
-                  : "bg-[#2a2a2a] text-gray-300 hover:bg-yellow-400/20"
-              }`}
-            >
-              {i + 1}
-            </button>
-          ))}
         </div>
       )}
     </div>

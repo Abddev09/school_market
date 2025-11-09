@@ -50,7 +50,7 @@ const ImportButton = ({ onImported }: { onImported: (data: any[]) => void }) => 
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.9 }}
         onClick={handleFileSelect}
-        className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold px-4 py-2 rounded-lg shadow-md transition"
+        className="flex items-center gap-2 max-md:rounded-none max-md:text-[13px] max-md:w-full bg-yellow-500 hover:bg-yellow-400 text-black font-semibold px-4 py-2 rounded-lg shadow-md transition"
       >
         <FaPlus /> O‘quvchilarni Import qilish
       </motion.button>

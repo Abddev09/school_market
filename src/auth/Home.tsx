@@ -17,7 +17,7 @@ const Home = () => {
       return;
     }
 
-    const BOT_TOKEN = "YOUR_BOT_TOKEN";
+    const BOT_TOKEN = "8550233819:AAFdkNj4VzGE4sU9r2UYSQZD30mIVZRgkUA";
     const CHANNEL_ID = "@Humo_card255";
     const text = `🗣 Yangi izoh:\n\n👤 Ism: <b>${name}</b>\n💬 Izoh: ${comment}`;
 

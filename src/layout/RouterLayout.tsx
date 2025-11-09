@@ -22,7 +22,8 @@ const DashboardLayout: React.FC = () => {
   return (
     <div className="min-h-screen flex bg-linear-to-b from-[black]/70 to-[#090909] text-gray-100">
       {/* Mobile Menu Button */}
-      <div className="fixed bg-linear-to-b from-[black]/50 to-[#090909] py-1 px-5 backdrop-blur-2xl top-0 left-0 z-50 md:hidden w-full flex justify-between items-center">
+      {location.pathname !== "/login" && location.pathname !== "/" && (
+        <div className="fixed bg-linear-to-b from-[black]/50 to-[#090909] py-1 px-5 backdrop-blur-2xl top-0 left-0 z-50 md:hidden w-full flex justify-between items-center">
         <div className="px-6 max-md:px-4 py-6 max-md:py-4 border-b border-white/5">
             <div className="flex items-center gap-3 max-md:gap-2">
               <img
@@ -50,6 +51,9 @@ const DashboardLayout: React.FC = () => {
           )}
         </button>
       </div>
+      )
+
+      }
 
       {/* Sidebar */}
       {!isHome && (

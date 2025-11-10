@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { login } from "../hooks/apis";
 import { toast } from "sonner";
 import LightRays from "../components/bg"; // joylashuvni o'zingga moslashtir
-import HelemtProviders from "../components/HelmetProvide";
+import HelmetPage from "../utils/Helmet";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -46,8 +46,8 @@ const Login = () => {
 };
 
   return (
-    <HelemtProviders>
-
+    <>
+    <HelmetPage/>
     <div className="relative w-full h-screen overflow-hidden bg-[#0a0a0a] text-gray-100">
       {/* 🌌 LightRays background */}
       <div className="absolute inset-0 z-0">
@@ -113,7 +113,7 @@ const Login = () => {
         </div>
       </div>
     </div>
-    </HelemtProviders>
+    </>
   );
 };
 

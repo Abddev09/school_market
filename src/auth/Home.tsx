@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { FaTelegramPlane, FaInstagram, FaYoutube } from "react-icons/fa";
-import HelemtProviders from "../components/HelmetProvide";
-
+import HelmetPage from "../utils/Helmet";
+import direktor from "../assets/image.png"
+import aa from "../assets/aa.png"
+import bb from "../assets/bb.png"
+import kl from "../assets/kl.png"
+import ll from "../assets/ll.png"
 const Home = () => {
   const [name, setName] = useState("");
   const [comment, setComment] = useState("");
@@ -58,7 +62,7 @@ const Home = () => {
 
   return (
     <>
-      <HelemtProviders>
+        <HelmetPage/>
         <div className="bg-linear-to-b from-black to-[#0d0d0d] text-white overflow-x-hidden font-sans">
       {/* TOAST NOTIFICATION */}
       {toast.show && (
@@ -95,19 +99,19 @@ const Home = () => {
           {[
             {
               text: "O'quvchilarning ta'lim olishga qiziqishlarini oshirish hamda rag'batlantirish maqsadida 'Maktab humo pul birligi' joriy qilindi.",
-              img: "/aa.png",
+              img: aa,
             },
             {
               text: "Humo kartasi — bu maktab pul birligi. O'quv yili oxirida yarmarkada humo kartalari bilan xaridni amalga oshirish mumkin.",
-              img: "/bb.png",
+              img: bb,
             },
             {
               text: "O'zbekiston Respublikasi Prezidentining PF-5712-sonli farmoni asosida Maktab madhiyasi joriy qilindi.",
-              img: "/ll.png",
+              img: ll,
             },
             {
               text: "Ta'limga mayoq dargoh, onadek mehri qaynoq. Maktabim, jon maktabim, seni sevib maqtagum.",
-              img: "/kl.png",
+              img: kl,
             },
           ].map((box, i) => (
             <div
@@ -139,7 +143,7 @@ const Home = () => {
               <h1 className="text-yellow-400 text-2xl max-md:text-xl font-bold">Direktor</h1>
               <p className="mb-3 text-lg max-md:text-base">255-maktab</p>
               <img
-                src="/image.png"
+                src={direktor}
                 alt="Direktor"
                 className="w-40 h-40 max-md:w-28 max-md:h-28 rounded-full border-2 border-yellow-400 shadow-[0_0_20px_gold] mx-auto mb-4"
               />
@@ -231,8 +235,7 @@ const Home = () => {
           © 2025 255-Maktab. Barcha huquqlar himoyalangan.
         </div>
       </footer>
-    </div>
-      </HelemtProviders>
+        </div>
     </>
   );
 };

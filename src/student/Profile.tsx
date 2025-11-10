@@ -3,7 +3,8 @@ import { motion, useMotionValue, useSpring } from "framer-motion";
 import { toast } from "sonner";
 import { getUsers } from "../hooks/apis";
 import { User, Trophy, Award } from "lucide-react";
-
+import humofront from "../assets/humocard.jpg"
+import humobehind from "../assets/behindhumo.jpg"
 interface Student {
   id: number;
   first_name: string;
@@ -125,7 +126,7 @@ const Profile = () => {
               <div
                 className="absolute inset-0"
                 style={{
-                  backgroundImage: `url("/humocard.jpg")`,
+                  backgroundImage: `url(${humofront})`,
                   backgroundSize: "contain",
                   backgroundPosition: "center",
                   backgroundRepeat: "no-repeat",
@@ -161,7 +162,7 @@ const Profile = () => {
               <div
                 className="absolute inset-0"
                 style={{
-                  backgroundImage: `url("/behindhumo.jpg")`,
+                  backgroundImage: `url(${humobehind})`,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                   backgroundRepeat: "no-repeat",
@@ -219,7 +220,7 @@ const Profile = () => {
         transition={{ delay: 0.4 }}
         className="bg-[#111] border border-yellow-400/10 rounded-2xl overflow-hidden shadow-[0_0_15px_rgba(212,175,55,0.05)]"
       >
-        <div className="bg-gradient-to-r from-yellow-400 to-yellow-300 text-black text-center font-semibold py-4 px-6">
+        <div className="bg-linear-to-r from-yellow-400 to-yellow-300 text-black text-center font-semibold py-4 px-6">
           <div className="flex items-center justify-center gap-2">
             <Trophy size={20} />
             <span className="text-lg">Top 10 Reyting</span>
@@ -243,11 +244,11 @@ const Profile = () => {
                 <span
                   className={`font-bold w-8 h-8 flex items-center justify-center rounded-lg ${
                     index === 0
-                      ? "bg-gradient-to-br from-yellow-400 to-yellow-600 text-black"
+                      ? "bg-linear-to-br from-yellow-400 to-yellow-600 text-black"
                       : index === 1
-                      ? "bg-gradient-to-br from-gray-300 to-gray-400 text-black"
+                      ? "bg-linear-to-br from-gray-300 to-gray-400 text-black"
                       : index === 2
-                      ? "bg-gradient-to-br from-orange-400 to-orange-600 text-black"
+                      ? "bg-linear-to-br from-orange-400 to-orange-600 text-black"
                       : "bg-gray-700 text-gray-300"
                   }`}
                 >

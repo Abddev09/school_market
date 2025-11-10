@@ -16,6 +16,7 @@ const LogoutModal = () => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
+    localStorage.removeItem("id");
     setVisible(false);
     navigate("/login");
   };
@@ -32,7 +33,7 @@ const LogoutModal = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[999]"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-999"
         >
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -50,7 +51,7 @@ const LogoutModal = () => {
             <div className="flex justify-center gap-4">
               <button
                 onClick={handleLogout}
-                className="bg-gradient-to-r from-yellow-400 to-yellow-300 text-black font-semibold py-2 px-6 rounded-lg hover:scale-[1.03] transition-transform"
+                className="bg-linear-to-r from-yellow-400 to-yellow-300 text-black font-semibold py-2 px-6 rounded-lg hover:scale-[1.03] transition-transform"
               >
                 Ha
               </button>

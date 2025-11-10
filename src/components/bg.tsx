@@ -460,7 +460,7 @@ void main() {
     <div
       ref={containerRef}
       style={containerStyle}
-      className={`w-full h-full z-[3] overflow-hidden relative ${className}`.trim()}
+      className={`w-full h-full z-30 overflow-hidden relative ${className}`.trim()}
     />
   );
 };

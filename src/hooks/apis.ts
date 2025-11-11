@@ -20,6 +20,7 @@ export const getOneUsers = async (id:any) => {
 
 export const createUser = async (data: any) => {
   const res = await api.post("users/", data);
+  console.log(res)
   return res;
 };
 

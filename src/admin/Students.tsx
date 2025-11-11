@@ -5,6 +5,7 @@ import { createUser, deleteUser, getUsers, updateUser, getClasses, updatePasswor
 import { toast } from "sonner";
 import ImportButton from "../components/Import";
 import { CenteredProgressLoader } from "../components/loading";
+import Pagination from "../components/Pagination";
 
 interface User {
   id: number;
@@ -55,7 +56,7 @@ const Students = () => {
   });
 
   const [currentPage, setCurrentPage] = useState(1);
-  const perPage = 20;
+  const perPage = 40;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterClass, setFilterClass] = useState<number>(0);
@@ -203,12 +204,17 @@ const Students = () => {
 
   const totalPages = Math.ceil(filteredStudents.length / perPage);
   const paginated = filteredStudents.slice((currentPage - 1) * perPage, currentPage * perPage);
-
+  const handlePageChange = (page: number) => {
+    console.log("Hozirgi sahifa:", page);
+    setCurrentPage(page);
+    // Bu yerda fetchBooks(page) yoki filter logic bo‘ladi
+  };
+const startIndex = (currentPage - 1) * perPage;
   return (
     <div className="p-6 bg-linear-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-2xl">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-yellow-400 tracking-wide">
-          O'quvchilar ro'yxati
+          O'quvchilar ro'yxati: {students.length}
         </h1>
         <div className="flex gap-5 items-center">
           <motion.button
@@ -279,7 +285,7 @@ const Students = () => {
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-xl shadow-lg bg-[#212121]/90 backdrop-blur-md border border-gray-700">
+      <div className="rounded-xl shadow-lg bg-[#212121]/90 backdrop-blur-md border border-gray-700">
         <table className="w-full text-left text-sm">
           <thead className="bg-[#2a2a2a] text-yellow-400 uppercase text-xs font-semibold">
             <tr>
@@ -315,7 +321,7 @@ const Students = () => {
         transition={{ delay: i * 0.03 }}
         className="border-b border-gray-700 hover:bg-yellow-400/10 transition"
       >
-        <td className="p-3 text-gray-300">{i + 1}</td>
+        <td className="p-3 text-gray-300">{startIndex +i + 1}</td>
         <td className="p-3 text-gray-300">{s.username}</td>
         <td className="p-3 text-gray-100">{s.first_name}</td>
         <td className="p-3 text-gray-100">{s.last_name}</td>
@@ -367,24 +373,15 @@ const Students = () => {
 
         </table>
       </div>
-
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-6 gap-2">
-          {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentPage(i + 1)}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition ${
-                currentPage === i + 1
-                  ? "bg-yellow-500 text-black"
-                  : "bg-[#2a2a2a] text-gray-300 hover:bg-yellow-400/20"
-              }`}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
-      )}
+{totalPages > 1 && (
+  <div className="mt-6">
+    <Pagination 
+      totalPages={totalPages} 
+      currentPage={currentPage} 
+      onPageChange={handlePageChange} 
+    />
+  </div>
+)}
 
       {/* Parolni tiklash Modal */}
       <AnimatePresence>

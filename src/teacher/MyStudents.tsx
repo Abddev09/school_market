@@ -60,7 +60,7 @@ const MyStudents = () => {
   });
 
   const [currentPage, setCurrentPage] = useState(1);
-  const perPage = 20;
+  const perPage = 40;
 
   const [searchTerm, setSearchTerm] = useState("");
   const teacher_id = Number(localStorage.getItem("id"));

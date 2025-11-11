@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { FaPlus, FaEllipsisV, FaTimes } from "react-icons/fa";
 import { createClass, createGrade, createUser, getMyStudents, getOneUsers } from "../hooks/apis";
 import ImportButton from "../components/Import";
+import { Check } from "lucide-react";
 
 interface Student {
   id: number;
@@ -44,7 +45,7 @@ const Teacher = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const perPage = 20;
+  const perPage = 40;
 
   const handleCreateClass = async () => {
     if (!newClassName.trim()) return toast.error("Sinf nomini kiriting!");
@@ -153,7 +154,7 @@ const Teacher = () => {
   const paginated = filteredStudents.slice((currentPage - 1) * perPage, currentPage * perPage);
 
   return (
-    <div className="p-6 max-md:p-4 bg-linear-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-2xl max-md:rounded-xl">
+    <div className="p-6 max-md:p-4 max-md:w-[92vw] bg-linear-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-2xl max-md:rounded-xl">
       {/* Header */}
       <div className="flex justify-between items-start mb-6 max-md:mb-4 gap-4">
         <div className="flex-1">
@@ -274,20 +275,19 @@ const Teacher = () => {
 
       {/* Responsive Table */}
       <div className="overflow-x-auto rounded-xl shadow-lg bg-[#212121]/90 backdrop-blur-md border border-gray-700">
-        <table className="w-full text-left text-sm">
+        <table className="w-full text-left text-sm min-w-[640px] max-md:min-w-[400px]">
           <thead className="bg-[#2a2a2a] text-yellow-400 uppercase text-xs font-semibold">
             <tr>
-              <th className="p-3 max-md:p-2 max-md:text-[10px]">T/r</th>
-              <th className="p-3 max-md:p-2 max-md:text-[10px]">Ism</th>
-              <th className="p-3 max-md:p-2 max-md:text-[10px]">Familiya</th>
-              <th className="p-3 max-md:p-2 max-md:text-[10px]">Baho</th>
-              <th className="p-3 max-md:p-2 max-md:text-[10px] text-center">Amal</th>
+              <th className="p-3 max-md:p-2 max-md:text-[10px] w-[10%] max-md:w-[20px]">T/r</th>
+              <th className="p-3 max-md:p-2 max-md:text-[10px] w-[20%] max-md:w-[80px]">Ism</th>
+              <th className="p-3 max-md:p-2 max-md:text-[10px] w-[30%] max-md:w-[100px]">Familiya</th>
+              <th className="p-3 max-md:p-2 max-md:text-[10px] w-[40%] max-md:w-auto text-start">Baho</th>
             </tr>
           </thead>
           <tbody>
             {paginated.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-8 max-md:p-6 text-center text-gray-400 max-md:text-sm">
+                <td colSpan={4} className="p-8 max-md:p-6 text-center text-gray-400 max-md:text-sm">
                   Ma'lumot topilmadi
                 </td>
               </tr>
@@ -300,40 +300,49 @@ const Teacher = () => {
                   transition={{ delay: i * 0.03 }}
                   className="border-b border-gray-700 hover:bg-yellow-400/10 transition"
                 >
-                  <td className="p-3 max-md:p-2 text-gray-300 max-md:text-xs">{i + 1}</td>
-                  <td className="p-3 max-md:p-2 text-gray-100 font-medium max-md:text-xs">
+                  <td className="p-3 max-md:p-2 text-gray-300 max-md:text-[11px]">{i + 1}</td>
+                  <td className="p-3 max-md:p-2 text-gray-100 font-medium max-md:text-[11px] truncate" title={student.first_name}>
                     {student.first_name}
                   </td>
-                  <td className="p-3 max-md:p-2 text-gray-100 font-medium max-md:text-xs">
+                  <td className="p-3 max-md:p-2 text-gray-100 font-medium max-md:text-[11px] truncate" title={student.last_name}>
                     {student.last_name}
                   </td>
-                  <td className="p-3 max-md:p-2">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      placeholder="1-10"
-                      value={gradeInputs[student.student_id] || ""}
-                      onChange={(e) => handleGradeInputChange(student.student_id, e.target.value)}
-                      disabled={loading[student.student_id]}
-                      className="w-20 max-md:w-14 bg-[#2a2a2a] border border-gray-600 rounded-lg p-2 max-md:p-1.5 text-center max-md:text-xs focus:outline-none focus:border-yellow-400 text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                      maxLength={2}
-                    />
-                  </td>
-                  <td className="p-3 max-md:p-2 text-center">
-                    <button
-                      onClick={() => handleGiveGrade(student.student_id)}
-                      disabled={loading[student.student_id] || !gradeInputs[student.student_id]}
-                      className="px-4 max-md:px-2 py-2 max-md:py-1.5 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold rounded-lg max-md:text-xs transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+                  <td className="-ml-10  p-3 max-md:p-2">
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleGiveGrade(student.student_id);
+                      }}
+                      className="flex items-center gap-2 max-md:gap-1"
                     >
-                      {loading[student.student_id] ? (
-                        <>
-                          <div className="w-4 h-4 max-md:w-3 max-md:h-3 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-                          <span className="max-md:hidden">Yuklanmoqda...</span>
-                        </>
-                      ) : (
-                        <span>Baholash</span>
-                      )}
-                    </button>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="1-10"
+                        value={gradeInputs[student.student_id] || ""}
+                        onChange={(e) => handleGradeInputChange(student.student_id, e.target.value)}
+                        disabled={loading[student.student_id]}
+                        className="w-16 max-md:w-12 bg-[#2a2a2a] border border-gray-600 rounded-lg p-2 max-md:p-1 text-center text-sm max-md:text-[11px] focus:outline-none focus:border-yellow-400 text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        maxLength={2}
+                      />
+                      <button
+                        type="submit"
+                        disabled={loading[student.student_id] || !gradeInputs[student.student_id]}
+                        className="px-3 max-md:px-2 py-2 max-md:py-1 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold rounded-lg text-xs max-md:text-[10px] transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 max-md:gap-1 whitespace-nowrap"
+                      >
+                        {loading[student.student_id] ? (
+                          <>
+                            <div className="w-3 h-3 max-md:w-2.5 max-md:h-2.5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                            <span className="max-md:hidden">Yuklanmoqda</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="hidden md:inline">Baholash</span>
+                            <Check className="inline md:hidden w-3 h-3 text-black" />
+                          </>
+                        )}
+                      </button>
+                    </form>
                   </td>
                 </motion.tr>
               ))

@@ -65,94 +65,157 @@ const Shop = () => {
     fetchProducts();
   }, []);
 
-  // 📷 Rasm yuklash
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, isEdit = false) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (isEdit) {
-        setEditForm({ ...editForm, image: file });
-      } else {
-        setAddForm({ ...addForm, image: file });
-      }
-      
-      // Preview uchun
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+  // 📷 Rasm yuklash - yangilangan versiya
+const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, isEdit = false) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  // ✅ Fayl hajmini tekshirish (5MB = 5 * 1024 * 1024 bytes)
+  const maxSize = 5 * 1024 * 1024; // 5MB
+  if (file.size > maxSize) {
+    toast.error("Fayl hajmi 5MB dan oshmasligi kerak!");
+    e.target.value = ""; // Input ni tozalash
+    return;
+  }
+
+  // ✅ Fayl turini tekshirish
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+  if (!allowedTypes.includes(file.type)) {
+    toast.error("Faqat rasm fayllari (JPG, PNG, GIF, WEBP) ruxsat etilgan!");
+    e.target.value = "";
+    return;
+  }
+
+  // ✅ Fayl nomini qisqartirish (30 belgi)
+  let fileName = file.name;
+  const fileExtension = fileName.split('.').pop();
+  const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.'));
+  
+  if (nameWithoutExt.length > 30) {
+    fileName = nameWithoutExt.substring(0, 30) + '.' + fileExtension;
+    toast.info("Fayl nomi 30 belgiga qisqartirildi");
+  }
+
+  // Yangi File obyekti yaratish (qisqartirilgan nom bilan)
+  const renamedFile = new File([file], fileName, { type: file.type });
+
+  if (isEdit) {
+    setEditForm({ ...editForm, image: renamedFile });
+  } else {
+    setAddForm({ ...addForm, image: renamedFile });
+  }
+  
+  // Preview uchun
+  const reader = new FileReader();
+  reader.onloadend = () => {
+    setImagePreview(reader.result as string);
   };
+  reader.readAsDataURL(file);
+};
 
-  // ➕ Qo'shish
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+// ➕ Qo'shish - yangilangan versiya
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    try {
-      setSubmitting(true);
-      const formData = new FormData();
-      formData.append("name", addForm.name);
-      formData.append("desc", addForm.desc);
-      formData.append("is_active", String(addForm.is_active));
-      
-      if (addForm.image) {
-        formData.append("image", addForm.image);
-      }
+  // ✅ Validatsiya
+  if (!addForm.name.trim()) {
+    toast.error("Mahsulot nomini kiriting!");
+    return;
+  }
 
-      await createProduct(formData);
-      toast.success("Mahsulot muvaffaqiyatli qo'shildi!");
-      setShowModal(false);
-      setAddForm({
-        name: "",
-        desc: "",
-        price: 0,
-        count: 0,
-        is_active: true,
-        image: null,
-      });
-      setImagePreview("");
-      fetchProducts();
-      setSubmitting(false);
-    } catch {
-      setSubmitting(false);
-      toast.error("Mahsulotni qo'shishda xatolik!");
+  if (!addForm.desc.trim()) {
+    toast.error("Ta'rifni kiriting!");
+    return;
+  }
+
+  try {
+    setSubmitting(true);
+    const formData = new FormData();
+    formData.append("name", addForm.name);
+    formData.append("desc", addForm.desc);
+    formData.append("is_active", String(addForm.is_active));
+    
+    if (addForm.image) {
+      formData.append("image", addForm.image);
     }
-  };
 
-  // ✏️ Yangilash
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
+    await createProduct(formData);
+    toast.success("Mahsulot muvaffaqiyatli qo'shildi!");
+    setShowModal(false);
+    setAddForm({
+      name: "",
+      desc: "",
+      price: null,
+      count: 0,
+      is_active: true,
+      image: null,
+    });
+    setImagePreview("");
+    fetchProducts();
+    setSubmitting(false);
+  } catch (error: any) {
+    setSubmitting(false);
+    const errorMsg = error?.response?.data?.message || "Mahsulotni qo'shishda xatolik!";
+    toast.error(errorMsg);
+  }
+};
 
-    try {
-      setSubmitting(true);
-      const formData = new FormData();
-      formData.append("id", String(editForm.id));
-      formData.append("name", editForm.name);
-      formData.append("desc", editForm.desc);
-      formData.append("is_active", String(editForm.is_active));
-      
-      if (editForm.price !== null) {
-        formData.append("price", String(editForm.price));
-      }
-      
-      formData.append("count", String(editForm.count));
-      
-      if (editForm.image) {
-        formData.append("image", editForm.image);
-      }
-      await updateProduct(formData);
-      toast.success("Mahsulot ma'lumotlari yangilandi!");
-      setShowEditModal(false);
-      setSelectedProduct(null);
-      setImagePreview("");
-      fetchProducts();
-      setSubmitting(false);
-    } catch (error) {
-      setSubmitting(false);
-      console.error("Update xatosi:", error);
-      toast.error("Yangilashda xatolik!");
+// ✏️ Yangilash - yangilangan versiya
+const handleUpdate = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  // ✅ Validatsiya
+  if (!editForm.name.trim()) {
+    toast.error("Mahsulot nomini kiriting!");
+    return;
+  }
+
+  if (!editForm.desc.trim()) {
+    toast.error("Ta'rifni kiriting!");
+    return;
+  }
+
+  if (editForm.price !== null && editForm.price < 0) {
+    toast.error("Narx manfiy bo'lishi mumkin emas!");
+    return;
+  }
+
+  if (editForm.count < 0) {
+    toast.error("Soni manfiy bo'lishi mumkin emas!");
+    return;
+  }
+
+  try {
+    setSubmitting(true);
+    const formData = new FormData();
+    formData.append("id", String(editForm.id));
+    formData.append("name", editForm.name);
+    formData.append("desc", editForm.desc);
+    formData.append("is_active", String(editForm.is_active));
+    
+    if (editForm.price !== null) {
+      formData.append("price", String(editForm.price));
     }
-  };
+    
+    formData.append("count", String(editForm.count));
+    
+    if (editForm.image) {
+      formData.append("image", editForm.image);
+    }
+    
+    await updateProduct(formData);
+    toast.success("Mahsulot ma'lumotlari yangilandi!");
+    setShowEditModal(false);
+    setSelectedProduct(null);
+    setImagePreview("");
+    fetchProducts();
+    setSubmitting(false);
+  } catch (error: any) {
+    setSubmitting(false);
+    const errorMsg = error?.response?.data?.message || "Yangilashda xatolik!";
+    toast.error(errorMsg);
+  }
+};
 
   // 🗑️ O'chirish
   const handleDelete = async () => {
@@ -175,7 +238,7 @@ const Shop = () => {
   const paginated = products.slice((currentPage - 1) * perPage, currentPage * perPage);
 
   return (
-    <div className="p-6 bg-gradient-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-2xl">
+    <div className="p-6 bg-linear-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-2xl">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-yellow-400 tracking-wide">
@@ -349,9 +412,9 @@ const Shop = () => {
                 <label className="text-gray-300 font-medium block mb-2">Rasm yuklash:</label>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
                   onChange={(e) => handleImageChange(e, false)}
-                  className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
+                  className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-yellow-500 file:text-black hover:file:bg-yellow-400"
                 />
                 {imagePreview && (
                   <div className="mt-3">
@@ -454,11 +517,11 @@ const Shop = () => {
 
               <div>
                 <label className="text-gray-300 font-medium block mb-2">Rasm yuklash:</label>
-                <input
+                                <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
                   onChange={(e) => handleImageChange(e, true)}
-                  className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
+                  className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-yellow-500 file:text-black hover:file:bg-yellow-400"
                 />
                 {imagePreview && (
                   <div className="mt-3">

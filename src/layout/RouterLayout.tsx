@@ -17,7 +17,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ isPublic,children }) 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (isHome || isPublic) {
-    return <main className="flex-1 overflow-y-hidden">{children ?? <Outlet />}</main>;
+    return <main className="flex-1 overflow-y-hidden">{children ?? <Outlet />}</main>
   }
 
   return (

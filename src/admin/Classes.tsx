@@ -143,7 +143,7 @@ const Classes = () => {
   const paginated = classes.slice((currentPage - 1) * perPage, currentPage * perPage);
 
   return (
-    <div className="p-6 bg-gradient-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-2xl">
+    <div className="p-6 bg-linear-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-2xl">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-yellow-400 tracking-wide">
           Sinflar ro'yxati

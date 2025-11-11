@@ -4,6 +4,7 @@ import { FaEdit, FaTrash, FaClock, FaCheckCircle } from "react-icons/fa";
 import { toast } from "sonner";
 import { deleteOrder, getOrders, getProducts, getUsers, updateOrder } from "../hooks/apis";
 import { CenteredProgressLoader } from "../components/loading";
+import Pagination from "../components/Pagination";
 
 // API funksiyalari import qiling
 // import { getOrders, updateOrder, deleteOrder, getUsers, getProducts } from "../hooks/apis";
@@ -47,7 +48,7 @@ const Orders = () => {
   });
 
   const [currentPage, setCurrentPage] = useState(1);
-  const perPage = 20;
+  const perPage = 40;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("");
@@ -174,6 +175,12 @@ const Orders = () => {
 
   const totalPages = Math.ceil(filteredOrders.length / perPage);
   const paginated = filteredOrders.slice((currentPage - 1) * perPage, currentPage * perPage);
+  const handlePageChange = (page: number) => {
+    console.log("Hozirgi sahifa:", page);
+    setCurrentPage(page);
+    // Bu yerda fetchBooks(page) yoki filter logic bo‘ladi
+  };
+  const startIndex = (currentPage - 1) * perPage;
 
   return (
     <div className="p-6 bg-gradient-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-2xl">
@@ -275,7 +282,7 @@ const Orders = () => {
                   transition={{ delay: i * 0.03 }}
                   className="border-b border-gray-700 hover:bg-yellow-400/10 transition"
                 >
-                  <td className="p-3 text-gray-300">{i+1}</td>
+                  <td className="p-3 text-gray-300">{startIndex +i+1}</td>
                   <td className="p-3 text-gray-300">{order?.code}</td>
                   <td className="p-3 text-gray-100">{getStudentName(order.student)}</td>
                   <td className="p-3 text-gray-100">{getProductName(order.product)}</td>
@@ -316,23 +323,15 @@ const Orders = () => {
         </table>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-6 gap-2">
-          {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentPage(i + 1)}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition ${
-                currentPage === i + 1
-                  ? "bg-yellow-500 text-black"
-                  : "bg-[#2a2a2a] text-gray-300 hover:bg-yellow-400/20"
-              }`}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
-      )}
+     {totalPages > 1 && (
+  <div className="mt-6">
+    <Pagination
+      totalPages={totalPages} 
+      currentPage={currentPage} 
+      onPageChange={handlePageChange} 
+    />
+  </div>
+)}
 
       <AnimatePresence>
         {showEditModal && (

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
-import { getClasses, createClass, updateClass, deleteClass, getUsers } from "../hooks/apis";
+import { getClasses, createClass, updateClass, deleteClass, getTeacherAll } from "../hooks/apis";
 import { toast } from "sonner";
 import { CenteredProgressLoader } from "../components/loading";
 
@@ -56,7 +56,7 @@ const Classes = () => {
   const fetchTeachers = async () => {
     try {
       setLoading(true);
-      const res = await getUsers();
+      const res = await getTeacherAll();
       const teachersList = res.data.filter((u: Teacher) => u.role === 2);
       setTeachers(teachersList);
       setLoading(false);

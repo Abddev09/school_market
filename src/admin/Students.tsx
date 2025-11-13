@@ -1,7 +1,8 @@
+
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaPlus, FaEdit, FaTrash, FaFileExcel } from "react-icons/fa";
-import { createUser, deleteUser, updateUser, getClasses, updatePassword, getStudentAll } from "../hooks/apis";
+import { createUser, deleteUser, updateUser, getClasses, updatePassword, getStudentsByClass } from "../hooks/apis";
 import { toast } from "sonner";
 import ImportButton from "../components/Import";
 import { CenteredProgressLoader } from "../components/loading";
@@ -66,13 +67,14 @@ const Students = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterClass, setFilterClass] = useState<number>(0);
 
-  // Backend dan ma'lumotlarni olish
-  const fetchStudents = async (page = 1) => {
+  // Backend dan ma'lumotlarni olish (class filter bilan)
+  const fetchStudents = async (page = 1, classId = 0) => {
     try {
       setLoading(true);
-      const res = await getStudentAll(page);
+      const res = await getStudentsByClass(page, classId);
       const data = res.data;
-      const onlyStudents = data.results.filter((u: User) => u.role === 3);
+      const onlyStudents = data.results
+      console.log(res)
       setStudents(onlyStudents);
       setTotalCount(data.count);
       setTotalPages(Math.ceil(data.count / perPage));
@@ -94,18 +96,23 @@ const Students = () => {
   };
 
   useEffect(() => {
-    fetchStudents(1);
+    fetchStudents(1, filterClass);
     fetchClasses();
   }, []);
+
+  // Class filter o'zgarganda backenddan yangi ma'lumot olish
+  useEffect(() => {
+    fetchStudents(1, filterClass);
+  }, [filterClass]);
 
   // Excel eksport funksiyasi
   const handleExportToExcel = () => {
     try {
-      if (!filteredStudents || filteredStudents.length === 0)
+      if (!students || students.length === 0)
         return toast.warning("Eksport qilish uchun o'quvchi topilmadi!");
 
       // Sinf bo'yicha guruhlash
-      const groupedByClass = filteredStudents.reduce((groups, student) => {
+      const groupedByClass = students.reduce((groups, student) => {
         const className = student.classe_name || "Noma'lum sinf";
         if (!groups[className]) groups[className] = [];
         groups[className].push(student);
@@ -115,7 +122,7 @@ const Students = () => {
       const workbook = XLSX.utils.book_new();
 
       // 🔹 1) Umumiy "Barcha o'quvchilar" sahifasi
-      const allData = filteredStudents.map((student, index) => ({
+      const allData = students.map((student, index) => ({
         "№": index + 1,
         "Ism": student.first_name,
         "Familiya": student.last_name,
@@ -184,7 +191,7 @@ const Students = () => {
         gender: true,
         classe_id: 0,
       });
-      fetchStudents(currentPage);
+      fetchStudents(currentPage, filterClass);
       setSubmitting(false);
     } catch {
       setSubmitting(false);
@@ -214,7 +221,7 @@ const Students = () => {
       toast.success("O'quvchi ma'lumotlari yangilandi!");
       setShowEditModal(false);
       setSelectedStudent(null);
-      fetchStudents(currentPage);
+      fetchStudents(currentPage, filterClass);
       setSubmitting(false);
     } catch (error) {
       setSubmitting(false);
@@ -231,7 +238,7 @@ const Students = () => {
       toast.success("O'quvchi o'chirildi!");
       setShowDeleteModal(false);
       setSelectedStudent(null);
-      fetchStudents(currentPage);
+      fetchStudents(currentPage, filterClass);
       setSubmitting(false);
     } catch {
       setSubmitting(false);
@@ -267,21 +274,19 @@ const Students = () => {
     return foundClass ? foundClass.name : "Sinf topilmadi";
   };
 
-  // Frontend filterlar
+  // Frontend qidiruv (faqat ism-familiya uchun, class filter backend orqali)
   const filteredStudents = students.filter((student) => {
     const matchesSearch =
       student.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.last_name.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesClass = filterClass === 0 || student.classe?.id === filterClass;
-
-    return matchesSearch && matchesClass;
+    return matchesSearch;
   });
 
   // Sahifani o'zgartirish
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    fetchStudents(page);
+    fetchStudents(page, filterClass);
   };
 
   const startIndex = (currentPage - 1) * perPage;
@@ -317,7 +322,7 @@ const Students = () => {
           </motion.button>
           <ImportButton onImported={(data) => {
             console.log("Import qilinganlar:", data);
-            fetchStudents(currentPage);
+            fetchStudents(currentPage, filterClass);
           }} />
         </div>
       </div>
@@ -472,7 +477,6 @@ const Students = () => {
           />
         </div>
       )}
-
       {/* Parolni tiklash Modal */}
       <AnimatePresence>
         {resetModal && (

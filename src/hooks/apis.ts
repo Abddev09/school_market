@@ -245,3 +245,8 @@ export const getStudentAll = async (page:number)=> {
   const res = await api.get(`all-students/?page=${page}`);
   return res
 }
+
+export const getStudentsByClass = async (page: number, classId: number) => {
+  const res = await api.get(`all-students/?page=${page}&class_id=${classId}`);
+  return res;
+}

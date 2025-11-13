@@ -1,8 +1,9 @@
+
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { FaPlus, FaEllipsisV, FaTimes } from "react-icons/fa";
-import { createClass, createGrade, createUser, getMyStudents, getOneUsers } from "../hooks/apis";
+import { createClass, createGrade, getMyStudents, getOneUsers } from "../hooks/apis";
 import ImportButton from "../components/Import";
 import { Check } from "lucide-react";
 import { CenteredProgressLoader } from "../components/loading";
@@ -24,9 +25,11 @@ interface Class {
   teacher: number;
 }
 
+
 const Teacher = () => {
   const [myClass, setMyClass] = useState<Class | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState<{ [key: number]: boolean }>({});
   const [gradeInputs, setGradeInputs] = useState<{ [key: number]: string }>({});
   const [showClassModal, setShowClassModal] = useState(false);
@@ -56,6 +59,7 @@ const Teacher = () => {
       setMyClass(res.data);
       toast.success("Sinf yaratildi!");
       setShowClassModal(false);
+      setNewClassName("");
     } catch (err) {
       toast.error("Sinf yaratishda xatolik!");
     }
@@ -76,12 +80,9 @@ const Teacher = () => {
       return toast.error("Barcha maydonlarni to'ldiring!");
 
     try {
-      const res = await createUser({
-        ...newStudent,
-        classe_id: myClass.id,
-        role: 3,
-      });
-      setStudents([...students, res.data]);
+      
+      // Yangi o'quvchi qo'shilgandan keyin ro'yxatni yangilash
+      fetchStudents(currentPage);
       toast.success("Yangi o'quvchi qo'shildi!");
       setShowStudentModal(false);
       setNewStudent({ first_name: "", last_name: "", password: "", gender: true });
@@ -90,14 +91,28 @@ const Teacher = () => {
     }
   };
 
-  const fetchStudents = async () => {
+  const fetchStudents = async (page: number = 1) => {
     try {
-      const res = await getMyStudents();
-      const students = res.data;
-      setMyClass(res.data);
-      setStudents(students);
+      const res = await getMyStudents(page);
+      
+      // DRF pagination javobini parse qilish
+      if (res.data.results) {
+        setStudents(res.data.results);
+        setTotalCount(res.data.count);
+        
+        // Agar class ma'lumoti alohida kelsa
+        if (res.data.results.length > 0 && res.data.results[0].classe) {
+          setMyClass(res.data.results[0].classe);
+        }
+      } else {
+        // Agar pagination bo'lmasa (oddiy array)
+        setStudents(res.data);
+        setTotalCount(res.data.length);
+      }
+      
     } catch (err) {
       toast.error("O'quvchilarni yuklashda xatolik!");
+      console.log(err);
     }
   };
 
@@ -150,7 +165,7 @@ const Teacher = () => {
     return matchesSearch && matchesClass;
   });
 
-  const totalPages = Math.ceil(filteredStudents.length / perPage);
+  const totalPages = Math.ceil(totalCount / perPage);
   const paginated = filteredStudents.slice((currentPage - 1) * perPage, currentPage * perPage);
 
   return (

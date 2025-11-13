@@ -38,7 +38,8 @@ const MyStudents = () => {
   const [resetModal, setResetModal] = useState(false);
   const [newClassName, setNewClassName] = useState("");
   const [showClassModal, setShowClassModal] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loading,setLoading] = useState(false)
   const [modalLoading, setModalLoading] = useState(false);
   const [selectedClassName, setSelectedClassName] = useState<string | null>(null);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
@@ -66,16 +67,28 @@ const MyStudents = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const teacher_id = Number(localStorage.getItem("id"));
 
-  const fetchStudents = async () => {
+  const fetchStudents = async (page: number = 1) => {
     try {
-      setLoading(true);
-      const res = await getMyStudents();
-      const studentss = res.data;
-      setStudents(studentss);
-      setLoading(false);
+      const res = await getMyStudents(page);
+      setLoading(true)
+      // DRF pagination javobini parse qilish
+      if (res.data.results) {
+        setStudents(res.data.results);
+        setTotalCount(res.data.count);
+      setLoading(false)
+        
+        // Agar class ma'lumoti alohida kelsa
+        
+      } else {
+        setLoading(false)
+        // Agar pagination bo'lmasa (oddiy array)
+        setStudents(res.data);
+        setTotalCount(res.data.length);
+      }
+      
     } catch (err) {
-      setLoading(false);
       toast.error("O'quvchilarni yuklashda xatolik!");
+      console.log(err);
     }
   };
 
@@ -302,7 +315,7 @@ const MyStudents = () => {
     return matchesSearch && matchesClass;
   });
 
-  const totalPages = Math.ceil(filteredStudents.length / perPage);
+  const totalPages = Math.ceil(totalCount / perPage);
   const paginated = filteredStudents.slice((currentPage - 1) * perPage, currentPage * perPage);
 
   return (

@@ -16,7 +16,7 @@ interface Product {
 
 interface Favourite {
   id: number;
-  product: number;
+  product_detail: Product;
   student: number;
 }
 
@@ -39,6 +39,7 @@ const Market = () => {
 
       // Faqat o'sha user ning sevimlilarini olish
       const favRes = await getFavourite();
+      console.log( "favoirites",favRes)
       setFavourites(favRes.data);
     } catch (err) {
       console.error(err);
@@ -52,12 +53,12 @@ const Market = () => {
     fetchData();
   }, []);
 
-  // Product ID bo'yicha favourite borligini tekshirish
+  
   const isFavourite = (productId: number) =>
-    favourites.some((f) => f.product === productId && f.student === Number(userId));
+    favourites.some((f) => f.product_detail.id === productId && f.student === Number(userId));
 
   const toggleFavourite = async (productId: number) => {
-    if (togglingFav) return; // Agar boshqa favourite toggle qilinayotgan bo'lsa
+    if (togglingFav) return; 
     
     try {
       setTogglingFav(productId);

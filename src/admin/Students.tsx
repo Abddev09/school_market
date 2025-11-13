@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaFileExcel } from "react-icons/fa";
 import { createUser, deleteUser, getUsers, updateUser, getClasses, updatePassword } from "../hooks/apis";
 import { toast } from "sonner";
 import ImportButton from "../components/Import";
 import { CenteredProgressLoader } from "../components/loading";
 import Pagination from "../components/Pagination";
+import * as XLSX from 'xlsx';
 
 interface User {
   id: number;
@@ -18,6 +19,7 @@ interface User {
   classe_id: number;
   classe: Class;
   password: string | number;
+  classe_name: string;
 }
 
 interface Class {
@@ -87,6 +89,71 @@ const Students = () => {
     fetchStudents();
     fetchClasses();
   }, []);
+
+  // Excel eksport funksiyasi
+    const handleExportToExcel = () => {
+    try {
+      if (!filteredStudents || filteredStudents.length === 0)
+        return toast.warning("Eksport qilish uchun o‘quvchi topilmadi!");
+  
+      // Sinf bo‘yicha guruhlash
+      const groupedByClass = filteredStudents.reduce((groups, student) => {
+        const className = student.classe_name || "Noma’lum sinf";
+        if (!groups[className]) groups[className] = [];
+        groups[className].push(student);
+        return groups;
+      }, {} as Record<string, User[]>);
+  
+      const workbook = XLSX.utils.book_new();
+  
+      // 🔹 1) Umumiy “Barcha o‘quvchilar” sahifasi
+      const allData = filteredStudents.map((student, index) => ({
+        "№": index + 1,
+        "Ism": student.first_name,
+        "Familiya": student.last_name,
+        "Login": student.username,
+        "Sinf": student.classe_name
+      }));
+      const allSheet = XLSX.utils.json_to_sheet(allData);
+      allSheet["!cols"] = [
+        { wch: 5 },
+        { wch: 20 },
+        { wch: 20 },
+        { wch: 25 },
+        { wch: 15 },
+      ];
+      XLSX.utils.book_append_sheet(workbook, allSheet, "Barcha o‘quvchilar");
+  
+      // 🔹 2) Har bir sinf uchun alohida sahifa
+      Object.entries(groupedByClass).forEach(([className, students]) => {
+        const exportData = students.map((student, index) => ({
+          "№": index + 1,
+          "Ism": student.first_name,
+          "Familiya": student.last_name,
+          "Login": student.username,
+          "Sinf": student.classe_name,
+        }));
+  
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        worksheet["!cols"] = [
+          { wch: 5 },
+          { wch: 20 },
+          { wch: 20 },
+          { wch: 25 },
+          { wch: 15 },
+        ];
+        XLSX.utils.book_append_sheet(workbook, worksheet, className);
+      });
+  
+      const fileName = `Oquvchilar_${new Date().toLocaleDateString("uz-UZ")}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+  
+      toast.success("Excel fayl muvaffaqiyatli yaratildi!");
+    } catch (error) {
+      console.error("Excel eksport xatosi:", error);
+      toast.error("Excel faylni yaratishda xatolik!");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -225,6 +292,13 @@ const startIndex = (currentPage - 1) * perPage;
           >
             <FaPlus /> O'quvchi qo'shish
           </motion.button>
+          <button
+                      onClick={handleExportToExcel}
+                      className="flex items-center gap-2 max-md:rounded-none max-md:text-[13px] max-md:w-full bg-yellow-500 hover:bg-yellow-400 text-black font-semibold px-4 py-2 rounded-lg shadow-md transition"
+                    >
+                      <FaFileExcel size={12} />
+                      <span>Excel yuklash</span>
+                    </button>
           <ImportButton onImported={(data) => console.log("Import qilinganlar:", data)} />
         </div>
       </div>

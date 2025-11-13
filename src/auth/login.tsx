@@ -19,8 +19,6 @@ const Login = () => {
   setLoading(true);
   try {
     const res = await login(form);
-    console.log(res);
-
     // 🔐 token va role’ni saqlaymiz (role hash qilinadi)
     localStorage.setItem("token", res.data.access_token);
 

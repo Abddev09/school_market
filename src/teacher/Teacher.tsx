@@ -5,6 +5,7 @@ import { FaPlus, FaEllipsisV, FaTimes } from "react-icons/fa";
 import { createClass, createGrade, createUser, getMyStudents, getOneUsers } from "../hooks/apis";
 import ImportButton from "../components/Import";
 import { Check } from "lucide-react";
+import { CenteredProgressLoader } from "../components/loading";
 
 interface Student {
   id: number;
@@ -95,7 +96,6 @@ const Teacher = () => {
       const students = res.data;
       setMyClass(res.data);
       setStudents(students);
-      console.log(res);
     } catch (err) {
       toast.error("O'quvchilarni yuklashda xatolik!");
     }
@@ -288,7 +288,7 @@ const Teacher = () => {
             {paginated.length === 0 ? (
               <tr>
                 <td colSpan={4} className="p-8 max-md:p-6 text-center text-gray-400 max-md:text-sm">
-                  Ma'lumot topilmadi
+                  {loading ? <CenteredProgressLoader/> : "Ma'lumotlar topilmadi"}
                 </td>
               </tr>
             ) : (

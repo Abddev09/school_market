@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaPlus, FaEdit, FaTrash, FaEllipsisV, FaKey } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaEllipsisV, FaKey, FaFileExcel } from "react-icons/fa";
 import { createUser, deleteUser, updateUser, getClasses, updatePassword, getMyStudents, createClass } from "../hooks/apis";
 import { toast } from "sonner";
 import ImportButton from "../components/Import";
+import * as XLSX from 'xlsx';
 
 interface User {
   student_id: number;
@@ -70,7 +71,6 @@ const MyStudents = () => {
       setLoading(true);
       const res = await getMyStudents();
       const studentss = res.data;
-      console.log(res)
       setStudents(studentss);
       setLoading(false);
     } catch (err) {
@@ -104,6 +104,73 @@ const MyStudents = () => {
       toast.error("Sinflarni yuklashda xatolik!");
     }
   };
+
+  // Excel eksport funksiyasi
+  const handleExportToExcel = () => {
+  try {
+    if (!filteredStudents || filteredStudents.length === 0)
+      return toast.warning("Eksport qilish uchun o‘quvchi topilmadi!");
+
+    // Sinf bo‘yicha guruhlash
+    const groupedByClass = filteredStudents.reduce((groups, student) => {
+      const className = student.classe_name || "Noma’lum sinf";
+      if (!groups[className]) groups[className] = [];
+      groups[className].push(student);
+      return groups;
+    }, {} as Record<string, User[]>);
+
+    const workbook = XLSX.utils.book_new();
+
+    // 🔹 1) Umumiy “Barcha o‘quvchilar” sahifasi
+    const allData = filteredStudents.map((student, index) => ({
+      "№": index + 1,
+      "Ism": student.first_name,
+      "Familiya": student.last_name,
+      "Login": student.username,
+      "Sinf": student.classe_name
+    }));
+    const allSheet = XLSX.utils.json_to_sheet(allData);
+    allSheet["!cols"] = [
+      { wch: 5 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 25 },
+      { wch: 15 },
+    ];
+    XLSX.utils.book_append_sheet(workbook, allSheet, "Barcha o‘quvchilar");
+
+    // 🔹 2) Har bir sinf uchun alohida sahifa
+    Object.entries(groupedByClass).forEach(([className, students]) => {
+      const exportData = students.map((student, index) => ({
+        "№": index + 1,
+        "Ism": student.first_name,
+        "Familiya": student.last_name,
+        "Login": student.username,
+        "Sinf": student.classe_name,
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      worksheet["!cols"] = [
+        { wch: 5 },
+        { wch: 20 },
+        { wch: 20 },
+        { wch: 25 },
+        { wch: 15 },
+      ];
+      XLSX.utils.book_append_sheet(workbook, worksheet, className);
+    });
+
+    const fileName = `Oquvchilar_${new Date().toLocaleDateString("uz-UZ")}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+
+    toast.success("Excel fayl muvaffaqiyatli yaratildi!");
+  } catch (error) {
+    console.error("Excel eksport xatosi:", error);
+    toast.error("Excel faylni yaratishda xatolik!");
+  }
+};
+
+
 
   useEffect(() => {
     fetchStudents();
@@ -268,10 +335,20 @@ const MyStudents = () => {
               <div className="absolute right-0 mt-2 w-56 bg-[#212121] border border-yellow-500/50 rounded-lg shadow-xl z-20 overflow-hidden">
                 <button
                   onClick={() => {
-                    setShowModal(true);
+                    handleExportToExcel();
                     setShowActionsMenu(false);
                   }}
                   className="w-full px-4 py-3 text-left text-sm text-gray-300 hover:bg-[#2a2a2a] transition flex items-center gap-3"
+                >
+                  <FaFileExcel size={12} />
+                  <span>Excel yuklash</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowModal(true);
+                    setShowActionsMenu(false);
+                  }}
+                  className="w-full px-4 py-3 text-left text-sm text-gray-300 hover:bg-[#2a2a2a] transition flex items-center gap-3 border-t border-yellow-500/30"
                 >
                   <FaPlus size={12} />
                   <span>O'quvchi qo'shish</span>
@@ -302,7 +379,14 @@ const MyStudents = () => {
         
 
         {/* Desktop Actions - Always visible */}
-        <div className="max-md:hidden flex w-full justify-end  items-center gap-5">
+        <div className="max-md:hidden flex justify-end items-center w-[150%] gap-5">
+          <button
+            onClick={handleExportToExcel}
+            className="flex items-center gap-2 max-md:rounded-none max-md:text-[13px] max-md:w-full bg-yellow-500 hover:bg-yellow-400 text-black font-semibold px-4 py-2 rounded-lg shadow-md transition"
+          >
+            <FaFileExcel size={12} />
+            <span>Excel yuklash</span>
+          </button>
           <button
             onClick={() => setShowModal(true)}
             className="flex items-center gap-2 max-md:rounded-none max-md:text-[13px] max-md:w-full bg-yellow-500 hover:bg-yellow-400 text-black font-semibold px-4 py-2 rounded-lg shadow-md transition"

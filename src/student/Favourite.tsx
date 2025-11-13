@@ -27,7 +27,6 @@ const Favourite = () => {
       setLoading(true);
       const favRes = await getFavourite();
       setFavourites(favRes.data);
-      console.log(favRes)
     } catch (err) {
       console.error(err);
       toast.error("Ma'lumotlarni olishda xatolik!");

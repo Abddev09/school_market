@@ -20,7 +20,6 @@ export const getOneUsers = async (id:any) => {
 
 export const createUser = async (data: any) => {
   const res = await api.post("users/", data);
-  console.log(res)
   return res;
 };
 
@@ -220,7 +219,6 @@ export const deleteCart = async (id:number) => {
 
 export const createOrder = async (data:any) => {
   const res = await api.post(`orders/`,data);
-  console.log(res)
   return res;
 };
 

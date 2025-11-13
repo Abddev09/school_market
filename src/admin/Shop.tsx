@@ -53,7 +53,6 @@ const Shop = () => {
     try {
       setLoading(true)
       const res = await getProducts();
-      console.log(res.data)
       setProducts(res.data);
       setLoading(false)
     } catch (err) {

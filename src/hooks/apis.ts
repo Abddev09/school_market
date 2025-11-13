@@ -9,7 +9,7 @@ export const login = async (data: LoginData) => {
 
 
 export const getUsers = async () => {
-  const res = await api.get("users/");
+  const res = await api.get(`users/`);
   return res
 };
 
@@ -37,7 +37,7 @@ export const deleteUser = async (data: any) => {
 
 
 export const getClasses = async () => {
-  const res = await api.get("classes/");
+  const res = await api.get(`classes/`);
   return res
 };
 
@@ -76,7 +76,7 @@ export const importStudents = async (file: File) => {
 
 // 📦 GET — barcha productlarni olish
 export const getProducts = async () => {
-  const res = await api.get("products/");
+  const res = await api.get(`products/`);
   return res;
 };
 
@@ -116,8 +116,8 @@ export const updatePassword = async (id:number, password:string) => {
 
 
 // 📦 GET — barcha orderlsrni olish
-export const getOrders = async () => {
-  const res = await api.get("orders/");
+export const getOrders = async (page:number) => {
+  const res = await api.get(`orders/?paga=${page}`);
   return res;
 };
 
@@ -139,8 +139,8 @@ export const deleteOrder = async (id: any) => {
 
 
 
-export const getMyStudents = async () =>{
-  const res = await api.get('my-students/');
+export const getMyStudents = async (page:number) =>{
+  const res = await api.get(`my-students/?page=${page}`);
   return res
 }
 
@@ -226,3 +226,22 @@ export const getMyOrders = async () => {
   const res = await api.get(`orders/`);
   return res;
 };
+
+
+
+export const getStudentUsers = async ()=> {
+  const res = await api.get(`student/users/`);
+  return res
+}
+
+
+export const getTeacherAll = async ()=> {
+  const res = await api.get(`all-teachers/`);
+  return res
+}
+
+
+export const getStudentAll = async (page:number)=> {
+  const res = await api.get(`all-students/?page=${page}`);
+  return res
+}

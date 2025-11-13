@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaPlus, FaEdit, FaTrash, FaFileExcel } from "react-icons/fa";
-import { createUser, deleteUser, getUsers, updateUser, getClasses, updatePassword } from "../hooks/apis";
+import { createUser, deleteUser, updateUser, getClasses, updatePassword, getStudentAll } from "../hooks/apis";
 import { toast } from "sonner";
 import ImportButton from "../components/Import";
 import { CenteredProgressLoader } from "../components/loading";
@@ -15,7 +15,7 @@ interface User {
   username: string;
   role: number;
   gender: boolean;
-  ball:number;
+  ball: number;
   classe_id: number;
   classe: Class;
   password: string | number;
@@ -39,7 +39,8 @@ const Students = () => {
   const [resetPasswordValue, setResetPasswordValue] = useState("");
   const [resetModal, setResetModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [loading,setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
+  
   const [addForm, setAddForm] = useState({
     first_name: "",
     last_name: "",
@@ -58,55 +59,62 @@ const Students = () => {
   });
 
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(1);
   const perPage = 40;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterClass, setFilterClass] = useState<number>(0);
 
-  const fetchStudents = async () => {
+  // Backend dan ma'lumotlarni olish
+  const fetchStudents = async (page = 1) => {
     try {
-      setLoading(true)
-      const res = await getUsers();
-      const data = res.data.filter((u: User) => u.role === 3);
-      setStudents(data);
-      setLoading(false)
+      setLoading(true);
+      const res = await getStudentAll(page);
+      const data = res.data;
+      const onlyStudents = data.results.filter((u: User) => u.role === 3);
+      setStudents(onlyStudents);
+      setTotalCount(data.count);
+      setTotalPages(Math.ceil(data.count / perPage));
+      setCurrentPage(page);
     } catch (err) {
+      toast.error("O'quvchilarni yuklashda xatolik!");
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchClasses = async () => {
     try {
-      setLoading(true)
       const res = await getClasses();
-      setClasses(res.data);
-      setLoading(false)
+      setClasses(res.data.results || res.data);
     } catch (err) {
-      setLoading(false)
+      toast.error("Sinflarni yuklashda xatolik!");
     }
   };
 
   useEffect(() => {
-    fetchStudents();
+    fetchStudents(1);
     fetchClasses();
   }, []);
 
   // Excel eksport funksiyasi
-    const handleExportToExcel = () => {
+  const handleExportToExcel = () => {
     try {
       if (!filteredStudents || filteredStudents.length === 0)
-        return toast.warning("Eksport qilish uchun o‘quvchi topilmadi!");
-  
-      // Sinf bo‘yicha guruhlash
+        return toast.warning("Eksport qilish uchun o'quvchi topilmadi!");
+
+      // Sinf bo'yicha guruhlash
       const groupedByClass = filteredStudents.reduce((groups, student) => {
-        const className = student.classe_name || "Noma’lum sinf";
+        const className = student.classe_name || "Noma'lum sinf";
         if (!groups[className]) groups[className] = [];
         groups[className].push(student);
         return groups;
       }, {} as Record<string, User[]>);
-  
+
       const workbook = XLSX.utils.book_new();
-  
-      // 🔹 1) Umumiy “Barcha o‘quvchilar” sahifasi
+
+      // 🔹 1) Umumiy "Barcha o'quvchilar" sahifasi
       const allData = filteredStudents.map((student, index) => ({
         "№": index + 1,
         "Ism": student.first_name,
@@ -122,8 +130,8 @@ const Students = () => {
         { wch: 25 },
         { wch: 15 },
       ];
-      XLSX.utils.book_append_sheet(workbook, allSheet, "Barcha o‘quvchilar");
-  
+      XLSX.utils.book_append_sheet(workbook, allSheet, "Barcha o'quvchilar");
+
       // 🔹 2) Har bir sinf uchun alohida sahifa
       Object.entries(groupedByClass).forEach(([className, students]) => {
         const exportData = students.map((student, index) => ({
@@ -133,7 +141,7 @@ const Students = () => {
           "Login": student.username,
           "Sinf": student.classe_name,
         }));
-  
+
         const worksheet = XLSX.utils.json_to_sheet(exportData);
         worksheet["!cols"] = [
           { wch: 5 },
@@ -144,10 +152,10 @@ const Students = () => {
         ];
         XLSX.utils.book_append_sheet(workbook, worksheet, className);
       });
-  
+
       const fileName = `Oquvchilar_${new Date().toLocaleDateString("uz-UZ")}.xlsx`;
       XLSX.writeFile(workbook, fileName);
-  
+
       toast.success("Excel fayl muvaffaqiyatli yaratildi!");
     } catch (error) {
       console.error("Excel eksport xatosi:", error);
@@ -157,7 +165,7 @@ const Students = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (addForm.classe_id === 0) {
       toast.error("Sinfni tanlang!");
       return;
@@ -176,7 +184,7 @@ const Students = () => {
         gender: true,
         classe_id: 0,
       });
-      fetchStudents();
+      fetchStudents(currentPage);
       setSubmitting(false);
     } catch {
       setSubmitting(false);
@@ -186,7 +194,7 @@ const Students = () => {
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (editForm.classe_id === 0) {
       toast.error("Sinfni tanlang!");
       return;
@@ -206,7 +214,7 @@ const Students = () => {
       toast.success("O'quvchi ma'lumotlari yangilandi!");
       setShowEditModal(false);
       setSelectedStudent(null);
-      fetchStudents();
+      fetchStudents(currentPage);
       setSubmitting(false);
     } catch (error) {
       setSubmitting(false);
@@ -223,7 +231,7 @@ const Students = () => {
       toast.success("O'quvchi o'chirildi!");
       setShowDeleteModal(false);
       setSelectedStudent(null);
-      fetchStudents();
+      fetchStudents(currentPage);
       setSubmitting(false);
     } catch {
       setSubmitting(false);
@@ -233,7 +241,7 @@ const Students = () => {
 
   const handleResetPassword = async () => {
     if (!selectedUser) return;
-    
+
     if (!resetPasswordValue.trim()) {
       toast.error("Yangi parolni kiriting!");
       return;
@@ -259,31 +267,46 @@ const Students = () => {
     return foundClass ? foundClass.name : "Sinf topilmadi";
   };
 
+  // Frontend filterlar
   const filteredStudents = students.filter((student) => {
-    const matchesSearch = 
+    const matchesSearch =
       student.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.last_name.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesClass = filterClass === 0 || student.classe?.id === filterClass;
-    
+
     return matchesSearch && matchesClass;
   });
 
-  const totalPages = Math.ceil(filteredStudents.length / perPage);
-  const paginated = filteredStudents.slice((currentPage - 1) * perPage, currentPage * perPage);
+  // Sahifani o'zgartirish
   const handlePageChange = (page: number) => {
-    console.log("Hozirgi sahifa:", page);
     setCurrentPage(page);
-    // Bu yerda fetchBooks(page) yoki filter logic bo‘ladi
+    fetchStudents(page);
   };
-const startIndex = (currentPage - 1) * perPage;
+
+  const startIndex = (currentPage - 1) * perPage;
+
   return (
     <div className="p-6 bg-linear-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-2xl">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-yellow-400 tracking-wide">
-          O'quvchilar ro'yxati: {students.length}
-        </h1>
+        <div>
+          <h1 className="text-3xl font-bold text-yellow-400 tracking-wide">
+            O'quvchilar ro'yxati
+          </h1>
+          <p className="text-gray-400 mt-1 text-sm">
+            Jami: {totalCount} ta o'quvchi
+          </p>
+        </div>
         <div className="flex gap-5 items-center">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={handleExportToExcel}
+            className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold px-4 py-2 rounded-lg shadow-md transition"
+          >
+            <FaFileExcel size={12} />
+            Excel yuklash
+          </motion.button>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.9 }}
@@ -292,14 +315,10 @@ const startIndex = (currentPage - 1) * perPage;
           >
             <FaPlus /> O'quvchi qo'shish
           </motion.button>
-          <button
-                      onClick={handleExportToExcel}
-                      className="flex items-center gap-2 max-md:rounded-none max-md:text-[13px] max-md:w-full bg-yellow-500 hover:bg-yellow-400 text-black font-semibold px-4 py-2 rounded-lg shadow-md transition"
-                    >
-                      <FaFileExcel size={12} />
-                      <span>Excel yuklash</span>
-                    </button>
-          <ImportButton onImported={(data) => console.log("Import qilinganlar:", data)} />
+          <ImportButton onImported={(data) => {
+            console.log("Import qilinganlar:", data);
+            fetchStudents(currentPage);
+          }} />
         </div>
       </div>
 
@@ -311,18 +330,16 @@ const startIndex = (currentPage - 1) * perPage;
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
-              setCurrentPage(1);
             }}
             className="w-full border border-gray-600 bg-[#2a2a2a] p-3 rounded-lg focus:outline-none focus:border-yellow-400 text-gray-100 placeholder-gray-500"
           />
         </div>
-        
+
         <div className="relative w-42">
           <select
             value={filterClass}
             onChange={(e) => {
               setFilterClass(Number(e.target.value));
-              setCurrentPage(1);
             }}
             className="w-full px-4 pr-10 border border-gray-600 bg-[#2a2a2a] p-3 rounded-lg focus:outline-none focus:border-yellow-400 text-gray-100 appearance-none"
           >
@@ -350,7 +367,6 @@ const startIndex = (currentPage - 1) * perPage;
             onClick={() => {
               setSearchTerm("");
               setFilterClass(0);
-              setCurrentPage(1);
             }}
             className="px-4 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition border border-red-500/30 whitespace-nowrap"
           >
@@ -374,88 +390,88 @@ const startIndex = (currentPage - 1) * perPage;
             </tr>
           </thead>
           <tbody>
-  {loading ? (
-    <tr>
-      <td colSpan={8} className="p-8 text-center">
-        <CenteredProgressLoader />
-      </td>
-    </tr>
-  ) : paginated.length === 0 ? (
-    <tr>
-      <td colSpan={8} className="p-8 text-center text-gray-400">
-        Ma'lumot topilmadi
-      </td>
-    </tr>
-  ) : (
-    paginated.map((s, i) => (
-      <motion.tr
-        key={s.id}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: i * 0.03 }}
-        className="border-b border-gray-700 hover:bg-yellow-400/10 transition"
-      >
-        <td className="p-3 text-gray-300">{startIndex +i + 1}</td>
-        <td className="p-3 text-gray-300">{s.username}</td>
-        <td className="p-3 text-gray-100">{s.first_name}</td>
-        <td className="p-3 text-gray-100">{s.last_name}</td>
-        <td className="p-3 text-gray-100">{s.ball}</td>
-        <td className="p-3 text-gray-400">{s.gender ? "Erkak" : "Ayol"}</td>
-        <td className="p-3 text-yellow-400 font-semibold">
-          {s.classe ? getClassName(s.classe.id) : "Sinf yo'q"}
-        </td>
-        <td className="p-3 flex justify-center gap-4">
-          <button
-            onClick={() => {
-              setSelectedStudent(s);
-              setEditForm({
-                id: s.id,
-                first_name: s.first_name,
-                last_name: s.last_name,
-                gender: s.gender,
-                classe_id: s.classe?.id || 0,
-              });
-              setShowEditModal(true);
-            }}
-            className="text-yellow-400 hover:text-yellow-300 transition"
-          >
-            <FaEdit />
-          </button>
-          <button
-            onClick={() => {
-              setSelectedStudent(s);
-              setShowDeleteModal(true);
-            }}
-            className="text-red-500 hover:text-red-400 transition"
-          >
-            <FaTrash />
-          </button>
-          <button
-            className="bg-yellow-400 px-4 py-2 rounded-lg text-black font-bold text-sm hover:bg-yellow-300 transition"
-            onClick={() => {
-              setSelectedUser(s);
-              setResetModal(true);
-            }}
-          >
-            Parolni tiklash
-          </button>
-        </td>
-      </motion.tr>
-    ))
-  )}
-</tbody>
-
+            {loading ? (
+              <tr>
+                <td colSpan={8} className="p-8 text-center">
+                  <CenteredProgressLoader />
+                </td>
+              </tr>
+            ) : filteredStudents.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="p-8 text-center text-gray-400">
+                  Ma'lumot topilmadi
+                </td>
+              </tr>
+            ) : (
+              filteredStudents.map((s, i) => (
+                <motion.tr
+                  key={s.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.03 }}
+                  className="border-b border-gray-700 hover:bg-yellow-400/10 transition"
+                >
+                  <td className="p-3 text-gray-300">{startIndex + i + 1}</td>
+                  <td className="p-3 text-gray-300">{s.username}</td>
+                  <td className="p-3 text-gray-100">{s.first_name}</td>
+                  <td className="p-3 text-gray-100">{s.last_name}</td>
+                  <td className="p-3 text-gray-100">{s.ball}</td>
+                  <td className="p-3 text-gray-400">{s.gender ? "Erkak" : "Ayol"}</td>
+                  <td className="p-3 text-yellow-400 font-semibold">
+                    {s.classe ? getClassName(s.classe.id) : "Sinf yo'q"}
+                  </td>
+                  <td className="p-3 flex justify-center gap-4">
+                    <button
+                      onClick={() => {
+                        setSelectedStudent(s);
+                        setEditForm({
+                          id: s.id,
+                          first_name: s.first_name,
+                          last_name: s.last_name,
+                          gender: s.gender,
+                          classe_id: s.classe?.id || 0,
+                        });
+                        setShowEditModal(true);
+                      }}
+                      className="text-yellow-400 hover:text-yellow-300 transition"
+                    >
+                      <FaEdit />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedStudent(s);
+                        setShowDeleteModal(true);
+                      }}
+                      className="text-red-500 hover:text-red-400 transition"
+                    >
+                      <FaTrash />
+                    </button>
+                    <button
+                      className="bg-yellow-400 px-4 py-2 rounded-lg text-black font-bold text-sm hover:bg-yellow-300 transition"
+                      onClick={() => {
+                        setSelectedUser(s);
+                        setResetModal(true);
+                      }}
+                    >
+                      Parolni tiklash
+                    </button>
+                  </td>
+                </motion.tr>
+              ))
+            )}
+          </tbody>
         </table>
       </div>
-{totalPages > 1 && (
-  <div className="mt-6">
-    <Pagination 
-      totalPages={totalPages} 
-      currentPage={currentPage} 
-      onPageChange={handlePageChange} 
-    />
-  </div>
-)}
+
+      {totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination
+            totalPages={totalPages}
+            currentPage={currentPage}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      )}
 
       {/* Parolni tiklash Modal */}
       <AnimatePresence>
@@ -464,7 +480,7 @@ const startIndex = (currentPage - 1) * perPage;
             <div className="space-y-3">
               <p className="text-lg">F.I.O: {selectedUser?.first_name} {selectedUser?.last_name}</p>
               <p>Login: {selectedUser?.username}</p>
-              <input 
+              <input
                 type="text"
                 placeholder="Yangi parol"
                 value={resetPasswordValue}
@@ -478,11 +494,10 @@ const startIndex = (currentPage - 1) * perPage;
                 type="button"
                 onClick={() => setResetModal(false)}
                 disabled={submitting}
-                className={`px-4 py-2 rounded border border-gray-600 transition ${
-                  submitting
+                className={`px-4 py-2 rounded border border-gray-600 transition ${submitting
                     ? 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed'
                     : 'bg-[#2a2a2a] hover:bg-[#333] text-gray-100'
-                }`}
+                  }`}
               >
                 Bekor qilish
               </button>
@@ -490,11 +505,10 @@ const startIndex = (currentPage - 1) * perPage;
                 type="button"
                 onClick={handleResetPassword}
                 disabled={submitting}
-                className={`px-4 py-2 rounded font-semibold shadow-md transition ${
-                  submitting
+                className={`px-4 py-2 rounded font-semibold shadow-md transition ${submitting
                     ? 'bg-[#3a3a3a] text-gray-600 cursor-not-allowed'
                     : 'bg-yellow-500 hover:bg-yellow-400 text-black'
-                }`}
+                  }`}
               >
                 {submitting ? "Yuklanmoqda..." : "Tiklash"}
               </button>
@@ -564,11 +578,10 @@ const startIndex = (currentPage - 1) * perPage;
                   type="button"
                   onClick={() => setShowModal(false)}
                   disabled={submitting}
-                  className={`px-4 py-2 rounded border border-gray-600 transition ${
-                    submitting
+                  className={`px-4 py-2 rounded border border-gray-600 transition ${submitting
                       ? 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed'
                       : 'bg-[#2a2a2a] hover:bg-[#333] text-gray-100'
-                  }`}
+                    }`}
                 >
                   Bekor qilish
                 </button>
@@ -576,11 +589,10 @@ const startIndex = (currentPage - 1) * perPage;
                   type="button"
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className={`px-4 py-2 rounded font-semibold shadow-md transition ${
-                    submitting
+                  className={`px-4 py-2 rounded font-semibold shadow-md transition ${submitting
                       ? 'bg-[#3a3a3a] text-gray-600 cursor-not-allowed'
                       : 'bg-yellow-500 hover:bg-yellow-400 text-black'
-                  }`}
+                    }`}
                 >
                   {submitting ? "Yuklanmoqda..." : "Saqlash"}
                 </button>
@@ -643,11 +655,10 @@ const startIndex = (currentPage - 1) * perPage;
                   type="button"
                   onClick={() => setShowEditModal(false)}
                   disabled={submitting}
-                  className={`px-4 py-2 rounded border border-gray-600 transition ${
-                    submitting
+                  className={`px-4 py-2 rounded border border-gray-600 transition ${submitting
                       ? 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed'
                       : 'bg-[#2a2a2a] hover:bg-[#333] text-gray-100'
-                  }`}
+                    }`}
                 >
                   Bekor qilish
                 </button>
@@ -655,11 +666,10 @@ const startIndex = (currentPage - 1) * perPage;
                   type="button"
                   onClick={handleUpdate}
                   disabled={submitting}
-                  className={`px-4 py-2 rounded font-semibold shadow-md transition ${
-                    submitting
+                  className={`px-4 py-2 rounded font-semibold shadow-md transition ${submitting
                       ? 'bg-[#3a3a3a] text-gray-600 cursor-not-allowed'
                       : 'bg-yellow-500 hover:bg-yellow-400 text-black'
-                  }`}
+                    }`}
                 >
                   {submitting ? "Yuklanmoqda..." : "Saqlash"}
                 </button>
@@ -683,22 +693,20 @@ const startIndex = (currentPage - 1) * perPage;
               <button
                 onClick={() => setShowDeleteModal(false)}
                 disabled={submitting}
-                className={`px-4 py-2 rounded border border-gray-600 transition ${
-                  submitting
+                className={`px-4 py-2 rounded border border-gray-600 transition ${submitting
                     ? 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed'
                     : 'bg-[#2a2a2a] hover:bg-[#333] text-gray-100'
-                }`}
+                  }`}
               >
                 Bekor qilish
               </button>
               <button
                 onClick={handleDelete}
                 disabled={submitting}
-                className={`px-4 py-2 rounded font-semibold transition ${
-                  submitting
+                className={`px-4 py-2 rounded font-semibold transition ${submitting
                     ? 'bg-[#3a3a3a] text-gray-600 cursor-not-allowed'
                     : 'bg-red-500 hover:bg-red-400 text-white'
-                }`}
+                  }`}
               >
                 {submitting ? "Yuklanmoqda..." : "O'chirish"}
               </button>

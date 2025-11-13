@@ -116,7 +116,7 @@ const Favourite = () => {
 
                 <button
                   onClick={() => addToCart(p.id)}
-                  className="mt-2 sm:mt-3 w-full bg-gradient-to-r from-yellow-400 to-yellow-300 text-black py-1.5 sm:py-2 rounded-md sm:rounded-lg flex items-center justify-center gap-1 sm:gap-2 font-semibold text-sm sm:text-base hover:scale-[1.02] transition-transform"
+                  className="mt-2 sm:mt-3 w-full bg-linear-to-r from-yellow-400 to-yellow-300 text-black py-1.5 sm:py-2 rounded-md sm:rounded-lg flex items-center justify-center gap-1 sm:gap-2 font-semibold text-sm sm:text-base hover:scale-[1.02] transition-transform"
                 >
                   <ShoppingCart size={10} className="sm:size-4" />
                   Savatga Qo‘shish

@@ -1,13 +1,11 @@
+
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaEdit, FaTrash, FaClock, FaCheckCircle } from "react-icons/fa";
 import { toast } from "sonner";
-import { deleteOrder, getOrders, getProducts, getUsers, updateOrder } from "../hooks/apis";
+import { deleteOrder, getOrders, getStudentUsers, updateOrder } from "../hooks/apis";
 import { CenteredProgressLoader } from "../components/loading";
 import Pagination from "../components/Pagination";
-
-// API funksiyalari import qiling
-// import { getOrders, updateOrder, deleteOrder, getUsers, getProducts } from "../hooks/apis";
 
 interface Student {
   id: number;
@@ -27,20 +25,20 @@ interface Order {
   product: number;
   date: string;
   receipt_date: string;
-  code:number;
+  code: number;
   status: "1" | "2";
   student_detail?: Student;
-  product_detail?: Product;
+  product_detail: Product;
 }
+
 
 const Orders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [loading,setLoading] =useState(false)
+  const [loading, setLoading] = useState(false);
   const [editForm, setEditForm] = useState({
     id: 0,
     status: "1" as "1" | "2",
@@ -48,27 +46,39 @@ const Orders = () => {
   });
 
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const perPage = 40;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("");
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (page: number = 1) => {
     try {
-      setLoading(true)
-      const res = await getOrders();
-      setOrders(res.data);
-      setLoading(false)
+      setLoading(true);
+      const res = await getOrders(page);
+      console.log(res)
+      // DRF pagination javobini parse qilish
+      if (res.data.results) {
+        setOrders(res.data.results);
+        setTotalCount(res.data.count);
+      } else {
+        // Agar pagination bo'lmasa (oddiy array)
+        setOrders(res.data);
+        setTotalCount(res.data.length);
+      }
+      
+      setLoading(false);
     } catch (err) {
-      setLoading(false)
-      console.log(err)
+      setLoading(false);
+      console.log(err);
+      toast.error("Buyurtmalarni yuklashda xatolik");
     }
   };
 
   const fetchStudents = async () => {
     try {
       setLoading(true)
-      const res = await getUsers();
+      const res = await getStudentUsers();
       const studentsList = res.data.filter((u: any) => u.role === 3);
       setStudents(studentsList);
       
@@ -79,22 +89,10 @@ const Orders = () => {
     }
   };
 
-  const fetchProducts = async () => {
-    try {
-      setLoading(true)
-      const res = await getProducts();
-      setProducts(res.data);
-      setLoading(false)
-    } catch (err) {
-      setLoading(false)
-      console.log("Mahsulotlarni yuklashda xatolik!");
-    }
-  };
 
   useEffect(() => {
     fetchOrders();
     fetchStudents();
-    fetchProducts();
   }, []);
 
   const handleUpdate = async (e: React.FormEvent) => {
@@ -130,11 +128,6 @@ const Orders = () => {
     return student ? `${student.first_name} ${student.last_name}` : "Noma'lum";
   };
 
-  const getProductName = (productId: number) => {
-    const product = products.find(p => p.id === productId);
-    return product ? product.name : "Noma'lum";
-  };
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('uz-UZ', {
@@ -163,7 +156,7 @@ const Orders = () => {
 
   const filteredOrders = orders.filter((order) => {
     const studentName = getStudentName(order.student).toLowerCase();
-    const productName = getProductName(order.product).toLowerCase();
+    const productName = order.product_detail.name.toLowerCase();
     const matchesSearch = 
       studentName.includes(searchTerm.toLowerCase()) ||
       productName.includes(searchTerm.toLowerCase());
@@ -173,7 +166,7 @@ const Orders = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const totalPages = Math.ceil(filteredOrders.length / perPage);
+  const totalPages = Math.ceil(totalCount / perPage);
   const paginated = filteredOrders.slice((currentPage - 1) * perPage, currentPage * perPage);
   const handlePageChange = (page: number) => {
     console.log("Hozirgi sahifa:", page);
@@ -183,7 +176,7 @@ const Orders = () => {
   const startIndex = (currentPage - 1) * perPage;
 
   return (
-    <div className="p-6 bg-gradient-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-2xl">
+    <div className="p-6 bg-linear-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-2xl">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-yellow-400 tracking-wide">
           Buyurtmalar ro'yxati
@@ -285,7 +278,7 @@ const Orders = () => {
                   <td className="p-3 text-gray-300">{startIndex +i+1}</td>
                   <td className="p-3 text-gray-300">{order?.code}</td>
                   <td className="p-3 text-gray-100">{getStudentName(order.student)}</td>
-                  <td className="p-3 text-gray-100">{getProductName(order.product)}</td>
+                  <td className="p-3 text-gray-100">{order.product_detail.name}</td>
                   <td className="p-3 text-gray-400 text-xs">{formatDate(order.date)}</td>
                   <td className="p-3 text-gray-400 text-xs">{formatDate(order.receipt_date)}</td>
                   <td className="p-3">{getStatusBadge(order.status)}</td>
@@ -351,7 +344,7 @@ const Orders = () => {
                 <label className="text-gray-300 font-medium block mb-2">Mahsulot:</label>
                 <input
                   type="text"
-                  value={selectedOrder ? getProductName(selectedOrder.product) : ""}
+                  value={selectedOrder ? selectedOrder.product_detail.name : ""}
                   disabled
                   className="w-full border border-gray-600 bg-[#1a1a1a] p-2 rounded text-gray-400 cursor-not-allowed"
                 />

@@ -227,7 +227,7 @@ const Market = () => {
                   className={`mt-2 sm:mt-3 w-full py-1.5 sm:py-2 rounded-md sm:rounded-lg flex items-center justify-center gap-1 sm:gap-2 font-semibold text-sm sm:text-base transition-transform ${
                     isAddingThisToCart
                       ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                      : "bg-gradient-to-r from-yellow-400 to-yellow-300 text-black hover:scale-[1.02]"
+                      : "bg-linear-to-r from-yellow-400 to-yellow-300 text-black hover:scale-[1.02]"
                   }`}
                 >
                   {isAddingThisToCart ? (

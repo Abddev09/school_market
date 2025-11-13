@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
-import { createUser, deleteUser, getUsers, updatePassword, updateUser } from "../hooks/apis";
+import { createUser, deleteUser, getTeacherAll, updatePassword, updateUser } from "../hooks/apis";
 import { toast } from "sonner";
 import { CenteredProgressLoader } from "../components/loading";
 import Pagination from "../components/Pagination";
@@ -51,8 +51,8 @@ const Teachers = () => {
   const fetchTeachers = async () => {
     try {
       setLoading(true);
-      const res = await getUsers();
-      const data = res.data.filter((u: User) => u.role === 2);
+      const res = await getTeacherAll();
+      const data = res.data
       setTeachers(data);
       setLoading(false)
     } catch (err) {

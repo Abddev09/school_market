@@ -37,7 +37,7 @@ const Order = () => {
     try {
       setLoading(true);
       const res = await getMyOrders();
-      setOrders(res.data);
+      setOrders(res.data.results);
     } catch {
       toast.error("Buyurtmalarni yuklashda xatolik!");
     } finally {
@@ -197,7 +197,7 @@ const Order = () => {
                             target.src = "/placeholder.png";
                           }
                         }}
-                        className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
+                        className="w-24 h-24 object-cover rounded-lg shrink-0"
                       />
                     )}
                     

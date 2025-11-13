@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useMotionValue, useSpring } from "framer-motion";
 import { toast } from "sonner";
-import { getUsers } from "../hooks/apis";
+import { getStudentUsers } from "../hooks/apis";
 import { User, Trophy, Award } from "lucide-react";
 import humofront from "../assets/humocard.jpg"
 import humobehind from "../assets/behindhumo.jpg"
@@ -31,7 +31,7 @@ const Profile = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await getUsers();
+        const res = await getStudentUsers();
         const allStudents: Student[] = res.data.filter((u: any) => u.role === 3);
         const sorted = allStudents.sort((a, b) => b.ball - a.ball);
         setStudents(sorted);

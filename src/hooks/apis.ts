@@ -1,9 +1,9 @@
-import { api } from "./api";
+import { api,loginApi } from "./api";
 import type { LoginData } from "../types/dataTypes.ts";
 
 
 export const login = async (data: LoginData) => {
-  const res = await api.post("login/", data);
+  const res = await loginApi.post("login/", data);
   return res.data;
 };
 

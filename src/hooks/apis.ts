@@ -1,4 +1,4 @@
-import { api,encryptData,loginApi } from "./api";
+import { api,loginApi } from "./api";
 import type { LoginData } from "../types/dataTypes.ts";
 
 
@@ -160,33 +160,22 @@ export const getGrade = async (id: number) => {
   return res;
 };
 
+// 🔹 Yangi baho yaratish
 export const createGrade = async (data: any) => {
-  const encrypted = encryptData(data);
-
-  const res = await api.post(
-    "grade/",
-    { payload: encrypted }, // backend shunday qabul qiladi
-    {
-      headers: { "Content-Type": "application/json" },
-    }
-  );
-
+  const res = await api.post("grade/", data, {
+    headers: { "Content-Type": "application/json" },
+  });
   return res;
 };
 
+// 🔹 Baho yangilash
 export const updateGrade = async (id: number, data: any) => {
-  const encrypted = encryptData(data);
-
-  const res = await api.put(
-    `grade/${id}/`,
-    { payload: encrypted }, // backend shunday qabul qiladi
-    {
-      headers: { "Content-Type": "application/json" },
-    }
-  );
-
+  const res = await api.put(`grade/${id}/`, data, {
+    headers: { "Content-Type": "application/json" },
+  });
   return res;
 };
+
 // 🔹 Baho o‘chirish
 export const deleteGrade = async (id: number) => {
   const res = await api.delete(`grade/${id}/`);

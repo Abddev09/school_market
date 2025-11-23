@@ -2,14 +2,16 @@
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
-
-
+const SECRET_KEY = import.meta.env.VITE_API_SECRET_KEY;
+const HEADER_NAME = import.meta.env.VITE_API_HEADER_NAME;
+console.log("Hedrer_name:",HEADER_NAME);
 
 export const api = axios.create({
   baseURL: `${API_URL}/api`,
   withCredentials: false, 
   headers: {
     "Content-Type": "application/json",
+    [HEADER_NAME]:`${SECRET_KEY}`
   },
 });
 
@@ -29,15 +31,6 @@ export const loginApi = axios.create({
   baseURL: `${API_URL}/api`,
   headers: {
     "Content-Type": "application/json",
+    [HEADER_NAME]:`${SECRET_KEY}`
   },
 });
-
-
-import CryptoJS from "crypto-js";
-
-const SECRET = import.meta.env.VITE_API_SECRET_KEY
-
-export function encryptData(data: any) {
-  const json = JSON.stringify(data);
-  return CryptoJS.AES.encrypt(json, SECRET).toString();
-}

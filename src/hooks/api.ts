@@ -32,3 +32,12 @@ export const loginApi = axios.create({
   },
 });
 
+
+import CryptoJS from "crypto-js";
+
+const SECRET = import.meta.env.VITE_API_SECRET_KEY
+
+export function encryptData(data: any) {
+  const json = JSON.stringify(data);
+  return CryptoJS.AES.encrypt(json, SECRET).toString();
+}

@@ -185,7 +185,6 @@ const Teachers = () => {
   const paginated = filteredStudents.slice((currentPage - 1) * perPage, currentPage * perPage);
 
   const handlePageChange = (page: number) => {
-    console.log("Hozirgi sahifa:", page);
     setCurrentPage(page);
     // Bu yerda fetchBooks(page) yoki filter logic bo‘ladi
   };

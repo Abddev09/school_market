@@ -56,7 +56,6 @@ const Orders = () => {
     try {
       setLoading(true);
       const res = await getOrders(page);
-      console.log(res)
       // DRF pagination javobini parse qilish
       if (res.data.results) {
         setOrders(res.data.results);
@@ -169,7 +168,6 @@ const Orders = () => {
   const totalPages = Math.ceil(totalCount / perPage);
   const paginated = filteredOrders.slice((currentPage - 1) * perPage, currentPage * perPage);
   const handlePageChange = (page: number) => {
-    console.log("Hozirgi sahifa:", page);
     setCurrentPage(page);
     // Bu yerda fetchBooks(page) yoki filter logic bo‘ladi
   };

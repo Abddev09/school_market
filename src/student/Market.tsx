@@ -39,7 +39,6 @@ const Market = () => {
 
       // Faqat o'sha user ning sevimlilarini olish
       const favRes = await getFavourite();
-      console.log( "favoirites",favRes)
       setFavourites(favRes.data);
     } catch (err) {
       console.error(err);

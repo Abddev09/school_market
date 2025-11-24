@@ -74,7 +74,6 @@ const Students = () => {
       const res = await getStudentsByClass(page, classId);
       const data = res.data;
       const onlyStudents = data.results
-      console.log(res)
       setStudents(onlyStudents);
       setTotalCount(data.count);
       setTotalPages(Math.ceil(data.count / perPage));
@@ -321,7 +320,7 @@ const Students = () => {
             <FaPlus /> O'quvchi qo'shish
           </motion.button>
           <ImportButton onImported={(data) => {
-            console.log("Import qilinganlar:", data);
+            console.log(":", data);
             fetchStudents(currentPage, filterClass);
           }} />
         </div>

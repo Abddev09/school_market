@@ -44,7 +44,7 @@ const Shop = () => {
     is_active: true,
     image: null as File | null,
   });
-
+  
   const [currentPage, setCurrentPage] = useState(1);
   const perPage = 12;
 
@@ -235,6 +235,7 @@ const handleUpdate = async (e: React.FormEvent) => {
 
   const totalPages = Math.ceil(products.length / perPage);
   const paginated = products.slice((currentPage - 1) * perPage, currentPage * perPage);
+  
 
   return (
     <div className="p-6 bg-linear-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-2xl">
@@ -268,14 +269,6 @@ const handleUpdate = async (e: React.FormEvent) => {
                 <img
                   src={product.image || "/placeholder.png"}
                   alt={product.name}
-                  onError={(e) => {
-                  const target = e.currentTarget;
-
-                  // 1. faqat agar hozirgi src fallback emas bo'lsa, o'zgartiramiz
-                  if (!target.src.includes("placeholder.png")) {
-                    target.src = "/placeholder.png";
-                  }
-                }}
                   className="w-full h-full object-cover"
                 />
             

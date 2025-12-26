@@ -2,7 +2,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import RouterLayout from "./layout/RouterLayout";
 import StudentLayout from "./layout/StudentLayout";
 import DashboardLayout from "./layout/RouterLayout";
-
+import Snowfall from 'react-snowfall';
 import Login from "./auth/login";
 import ProtectedRoute from "./components/RoleCounter";
 import Home from "./auth/Home";
@@ -95,6 +95,11 @@ const App = () => {
   return (
     <>
     <Toaster position="top-center"/>
+          <Snowfall
+  snowflakeCount={250}
+  color="white"
+  style={{ position: 'fixed', width: '100vw', height: '100vh', zIndex:50 }}
+/>
       <RouterProvider router={router} />
     </>
   );

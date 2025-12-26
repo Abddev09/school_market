@@ -85,14 +85,27 @@ const Students = () => {
     }
   };
 
-  const fetchClasses = async () => {
-    try {
-      const res = await getClasses();
-      setClasses(res.data.results || res.data);
-    } catch (err) {
-      toast.error("Sinflarni yuklashda xatolik!");
-    }
-  };
+  
+
+const fetchClasses = async () => {
+  try {
+    const res = await getClasses();
+    const data = res.data.results || res.data;
+    
+    // name ichidagi raqam bo'yicha sort qilish
+    const sortedData = [...data].sort((a, b) => {
+      const aNum = parseInt(a.name.match(/\d+/)?.[0] || '0');
+      const bNum = parseInt(b.name.match(/\d+/)?.[0] || '0');
+      return aNum - bNum;
+    });
+    
+    setClasses(sortedData);
+  } catch (err) {
+    toast.error("Sinflarni yuklashda xatolik!");
+  }
+};
+
+
 
   useEffect(() => {
     fetchStudents(1, filterClass);

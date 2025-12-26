@@ -4,6 +4,7 @@ import { login } from "../hooks/apis";
 import { toast } from "sonner";
 import LightRays from "../components/bg"; // joylashuvni o'zingga moslashtir
 import HelmetPage from "../utils/Helmet";
+import Snowfall from 'react-snowfall';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -45,6 +46,11 @@ const Login = () => {
 
   return (
     <>
+     <Snowfall
+      snowflakeCount={250}
+      color="white"
+      style={{ position: 'fixed', width: '100vw', height: '100vh', zIndex:50 }}
+    />
     <HelmetPage/>
     <div className="relative w-full h-screen overflow-hidden bg-[#0a0a0a] text-gray-100">
       {/* 🌌 LightRays background */}

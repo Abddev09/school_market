@@ -38,7 +38,6 @@ export const deleteUser = async (data: any) => {
 
 export const getClasses = async () => {
   const res = await api.get(`classes/`);
-  console.log(res)
   return res
 };
 
@@ -253,7 +252,7 @@ export const getStudentsByClass = async (page: number, classId: number) => {
 }
 
 
-export const searchStudent = async (s:string) => {
-  const res = await api.get(`search?s=${s}`);
+export const searchStudent = async (s:string,page:number) => {
+  const res = await api.get(`search?s=${s}&page=${page}`);
   return res;
 }

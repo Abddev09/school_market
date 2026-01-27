@@ -87,8 +87,8 @@ const Students = () => {
     }
   };
 
-  // Qidiruv funksiyasi
-  const handleSearch = async (searchValue: string) => {
+  // Qidiruv funksiyasi (pagination bilan)
+  const handleSearch = async (searchValue: string, page = 1) => {
     if (!searchValue.trim()) {
       setIsSearching(false);
       fetchStudents(1, filterClass);
@@ -98,19 +98,23 @@ const Students = () => {
     try {
       setLoading(true);
       setIsSearching(true);
-      const res = await searchStudent(searchValue);
-      const data = res.data.results || res.data;
+      const res = await searchStudent(searchValue, page);
+      const data = res.data;
+      
+      // Backend'dan kelgan ma'lumotlar
+      let results = data.results || data;
+      let totalCount = data.count || results.length;
       
       // Agar filterClass tanlangan bo'lsa, natijalarni filter qilish
-      let filteredData = data;
       if (filterClass !== 0) {
-        filteredData = data.filter((student: User) => student.classe_id === filterClass);
+        results = results.filter((student: User) => student.classe_id === filterClass);
+        totalCount = results.length;
       }
       
-      setStudents(filteredData);
-      setTotalCount(filteredData.length);
-      setTotalPages(1);
-      setCurrentPage(1);
+      setStudents(results);
+      setTotalCount(totalCount);
+      setTotalPages(Math.ceil(totalCount / perPage));
+      setCurrentPage(page);
     } catch (err) {
       toast.error("Qidiruvda xatolik!");
       setIsSearching(false);
@@ -346,8 +350,8 @@ const Students = () => {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     if (isSearching && searchTerm.trim()) {
-      // Qidiruv rejimida sahifa o'zgartirish mumkin emas
-      return;
+      // Qidiruv rejimida qidiruv natijalarining sahifasini o'zgartirish
+      handleSearch(searchTerm, page);
     } else {
       fetchStudents(page, filterClass);
     }
@@ -397,17 +401,8 @@ const Students = () => {
             type="text"
             placeholder="Ism yoki familiya bo'yicha qidirish..."
             value={searchTerm}
-            onChange={(e) => {
-              const value = e.target.value;
-              setSearchTerm(value);
-              
-              // Debounce - 500ms kutib qidirish
-              const timeoutId = setTimeout(() => {
-                handleSearch(value);
-              }, 500);
-              
-              return () => clearTimeout(timeoutId);
-            }}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch(searchTerm, 1)}
             className="w-full border border-gray-600 bg-[#2a2a2a] p-3 rounded-lg focus:outline-none focus:border-yellow-400 text-gray-100 placeholder-gray-500"
           />
         </div>
@@ -420,7 +415,8 @@ const Students = () => {
               setFilterClass(classId);
               
               if (searchTerm.trim() && isSearching) {
-                handleSearch(searchTerm);
+                // Qidiruv rejimida qidiruv qayta amalga oshiriladi
+                handleSearch(searchTerm, 1);
               } else {
                 fetchStudents(1, classId);
               }
@@ -550,7 +546,7 @@ const Students = () => {
         </table>
       </div>
 
-      {totalPages > 1 && !isSearching && (
+      {totalPages > 1 && (
         <div className="mt-6">
           <Pagination
             totalPages={totalPages}

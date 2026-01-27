@@ -47,14 +47,12 @@ const App = () => {
         { path: "/teachers", element: <Teachers /> },
         { path: "/shop", element: <Shop /> },
         { path: "/orders", element: <Orders /> },
-        // 404 sahifa admin dashboard ichida
         { path: "*", element: <DashboardLayout isPublic>
       <NotFound />
     </DashboardLayout> },
       ],
     },
 
-    // Teacher Dashboard Routes
     {
       path: "/",
       element: (
@@ -67,11 +65,10 @@ const App = () => {
         { path: "/my-students", element: <MyStudents /> },
         { path: "*", element: <DashboardLayout isPublic>
       <NotFound />
-    </DashboardLayout> }, // teacher 404
+    </DashboardLayout> },
       ],
     },
 
-    // Student Layout Routes
     {
       path: "/",
       element: (
@@ -87,19 +84,19 @@ const App = () => {
         { path: "/my-profile", element: <Profile /> },
         { path: "*", element: <DashboardLayout isPublic>
       <NotFound />
-    </DashboardLayout> }, // student 404
+    </DashboardLayout> }, 
       ],
     },
   ]);
 
   return (
     <>
-    <Toaster position="top-center"/>
+      <Toaster position="top-center"/>
           <Snowfall
-  snowflakeCount={250}
-  color="white"
-  style={{ position: 'fixed', width: '100vw', height: '100vh', zIndex:50 }}
-/>
+            snowflakeCount={250}
+            color="white"
+            style={{ position: 'fixed', width: '100vw', height: '100vh', zIndex:50 }}
+          />
       <RouterProvider router={router} />
     </>
   );

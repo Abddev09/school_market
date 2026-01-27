@@ -42,16 +42,49 @@ const Classes = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const perPage = 20;
 
-  const fetchClasses = async () => {
-    try {
-      setLoading(true);
-      const res = await getClasses();
-      setClasses(res.data);
-      setLoading(false);
-    } catch (err) {
-      setLoading(false);
-    }
-  };
+  const normalizeName = (name: string) => {
+  const num = name.match(/\d+/)?.[0] || '0';
+  const letter = name
+    .replace(/\d+/g, '')
+    .replace(/[^a-zA-Z]/g, '')
+    .charAt(0)
+    .toUpperCase();
+
+  return `${num}-${letter}`;
+};
+
+const fetchClasses = async () => {
+  try {
+    setLoading(true);
+
+    const res = await getClasses();
+    const data = res.data;
+
+    const normalizedAndSorted = [...data]
+      .map((item: any) => ({
+        ...item,
+        name: normalizeName(item.name),
+      }))
+      .sort((a: any, b: any) => {
+        const [aNum, aLet] = a.name.split('-');
+        const [bNum, bLet] = b.name.split('-');
+
+        if (+aNum !== +bNum) {
+          return +aNum - +bNum;
+        }
+
+        return aLet.localeCompare(bLet);
+      });
+
+    setClasses(normalizedAndSorted);
+  } catch (err) {
+    console.log("Error", err)
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const fetchTeachers = async () => {
     try {
@@ -190,7 +223,7 @@ const Classes = () => {
                   transition={{ delay: i * 0.03 }}
                   className="border-b border-gray-700 hover:bg-yellow-400/10 transition"
                 >
-                  <td className="p-3 text-gray-300">{i+1}</td>
+                  <td className="p-3 text-gray-300">{(currentPage - 1) * perPage + i + 1}</td>
                   <td className="p-3 text-gray-100 font-semibold">{c.name}</td>
                   <td className="p-3 text-gray-400">{getTeacherName(c.teacher)}</td>
                   <td className="p-3 flex justify-center gap-4">

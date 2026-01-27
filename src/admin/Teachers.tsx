@@ -40,6 +40,7 @@ const Teachers = () => {
   const [editForm, setEditForm] = useState({
     id: 0,
     first_name: "",
+    username:"",
     last_name: "",
     role: 2,
     gender: true,
@@ -98,6 +99,7 @@ const Teachers = () => {
       // ✅ editForm dan ma'lumotlarni yuborish
       const updateData = {
         id: editForm.id,
+        username:editForm.username,
         first_name: editForm.first_name,
         last_name: editForm.last_name,
         role: 2,
@@ -273,6 +275,7 @@ const Teachers = () => {
                       // ✅ Edit formani to'ldirish
                       setEditForm({
                         id: t.id,
+                        username:t.username,
                         first_name: t.first_name,
                         last_name: t.last_name,
                         role: 2,
@@ -414,6 +417,14 @@ const Teachers = () => {
         {showEditModal && (
           <ModalWrapper onClose={() => setShowEditModal(false)} title="✏️ Ustozni tahrirlash">
             <form onSubmit={handleUpdate} className="space-y-3">
+              <input
+                type="text"
+                placeholder="Username"
+                value={editForm.username}
+                onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
+                required
+              />
               <input
                 type="text"
                 placeholder="Ism"

@@ -38,6 +38,7 @@ export const deleteUser = async (data: any) => {
 
 export const getClasses = async () => {
   const res = await api.get(`classes/`);
+  console.log(res)
   return res
 };
 
@@ -236,17 +237,23 @@ export const getStudentUsers = async ()=> {
 
 
 export const getTeacherAll = async ()=> {
-  const res = await api.get(`all-teachers/`);
-  return res
+  const res = await api.get(`all-teachers`);
+  return res;
 }
 
 
 export const getStudentAll = async (page:number)=> {
   const res = await api.get(`all-students/?page=${page}`);
-  return res
+  return res;
 }
 
 export const getStudentsByClass = async (page: number, classId: number) => {
-  const res = await api.get(`all-students/?page=${page}&class_id=${classId}`);
+  const res = await api.get(`all-students?page=${page}&class_id=${classId}`);
+  return res;
+}
+
+
+export const searchStudent = async (s:string) => {
+  const res = await api.get(`search?s=${s}`);
   return res;
 }

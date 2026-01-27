@@ -1,8 +1,7 @@
-
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaPlus, FaEdit, FaTrash, FaFileExcel } from "react-icons/fa";
-import { createUser, deleteUser, updateUser, getClasses, updatePassword, getStudentsByClass } from "../hooks/apis";
+import { createUser, deleteUser, updateUser, getClasses, updatePassword, getStudentsByClass, searchStudent } from "../hooks/apis";
 import { toast } from "sonner";
 import ImportButton from "../components/Import";
 import { CenteredProgressLoader } from "../components/loading";
@@ -53,6 +52,7 @@ const Students = () => {
 
   const [editForm, setEditForm] = useState({
     id: 0,
+    username:"",
     first_name: "",
     last_name: "",
     gender: true,
@@ -66,6 +66,7 @@ const Students = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterClass, setFilterClass] = useState<number>(0);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Backend dan ma'lumotlarni olish (class filter bilan)
   const fetchStudents = async (page = 1, classId = 0) => {
@@ -78,6 +79,7 @@ const Students = () => {
       setTotalCount(data.count);
       setTotalPages(Math.ceil(data.count / perPage));
       setCurrentPage(page);
+      setIsSearching(false);
     } catch (err) {
       toast.error("O'quvchilarni yuklashda xatolik!");
     } finally {
@@ -85,27 +87,75 @@ const Students = () => {
     }
   };
 
-  
+  // Qidiruv funksiyasi
+  const handleSearch = async (searchValue: string) => {
+    if (!searchValue.trim()) {
+      setIsSearching(false);
+      fetchStudents(1, filterClass);
+      return;
+    }
 
-const fetchClasses = async () => {
-  try {
-    const res = await getClasses();
-    const data = res.data.results || res.data;
-    
-    // name ichidagi raqam bo'yicha sort qilish
-    const sortedData = [...data].sort((a, b) => {
-      const aNum = parseInt(a.name.match(/\d+/)?.[0] || '0');
-      const bNum = parseInt(b.name.match(/\d+/)?.[0] || '0');
-      return aNum - bNum;
-    });
-    
-    setClasses(sortedData);
-  } catch (err) {
-    toast.error("Sinflarni yuklashda xatolik!");
-  }
-};
+    try {
+      setLoading(true);
+      setIsSearching(true);
+      const res = await searchStudent(searchValue);
+      const data = res.data.results || res.data;
+      
+      // Agar filterClass tanlangan bo'lsa, natijalarni filter qilish
+      let filteredData = data;
+      if (filterClass !== 0) {
+        filteredData = data.filter((student: User) => student.classe_id === filterClass);
+      }
+      
+      setStudents(filteredData);
+      setTotalCount(filteredData.length);
+      setTotalPages(1);
+      setCurrentPage(1);
+    } catch (err) {
+      toast.error("Qidiruvda xatolik!");
+      setIsSearching(false);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  const normalizeName = (name: string) => {
+    const num = name.match(/\d+/)?.[0] || '0';
+    const letter = name
+      .replace(/\d+/g, '')
+      .replace(/[^a-zA-Z]/g, '')
+      .charAt(0)
+      .toUpperCase();
 
+    return `${num}-${letter}`;
+  };
+
+  const fetchClasses = async () => {
+    try {
+      const res = await getClasses();
+      const data = res.data.results || res.data;
+
+      const normalizedData = data.map((item: any) => ({
+        ...item,
+        name: normalizeName(item.name),
+      }));
+
+      const sortedData = normalizedData.sort((a: any, b: any) => {
+        const [aNum, aLet] = a.name.split('-');
+        const [bNum, bLet] = b.name.split('-');
+
+        if (+aNum !== +bNum) {
+          return +aNum - +bNum;
+        }
+
+        return aLet.localeCompare(bLet);
+      });
+
+      setClasses(sortedData);
+    } catch (err) {
+      toast.error("Sinflarni yuklashda xatolik!");
+    }
+  };
 
   useEffect(() => {
     fetchStudents(1, filterClass);
@@ -114,7 +164,9 @@ const fetchClasses = async () => {
 
   // Class filter o'zgarganda backenddan yangi ma'lumot olish
   useEffect(() => {
-    fetchStudents(1, filterClass);
+    if (!isSearching) {
+      fetchStudents(1, filterClass);
+    }
   }, [filterClass]);
 
   // Excel eksport funksiyasi
@@ -223,6 +275,7 @@ const fetchClasses = async () => {
       setSubmitting(true);
       const updateData = {
         id: editForm.id,
+        username: editForm.username,
         first_name: editForm.first_name,
         last_name: editForm.last_name,
         role: 3,
@@ -286,19 +339,18 @@ const fetchClasses = async () => {
     return foundClass ? foundClass.name : "Sinf topilmadi";
   };
 
-  // Frontend qidiruv (faqat ism-familiya uchun, class filter backend orqali)
-  const filteredStudents = students.filter((student) => {
-    const matchesSearch =
-      student.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.last_name.toLowerCase().includes(searchTerm.toLowerCase());
-
-    return matchesSearch;
-  });
+  // Frontend qidiruv endi ishlatilmaydi, chunki backend qidiruv bor
+  const filteredStudents = students;
 
   // Sahifani o'zgartirish
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    fetchStudents(page, filterClass);
+    if (isSearching && searchTerm.trim()) {
+      // Qidiruv rejimida sahifa o'zgartirish mumkin emas
+      return;
+    } else {
+      fetchStudents(page, filterClass);
+    }
   };
 
   const startIndex = (currentPage - 1) * perPage;
@@ -346,7 +398,15 @@ const fetchClasses = async () => {
             placeholder="Ism yoki familiya bo'yicha qidirish..."
             value={searchTerm}
             onChange={(e) => {
-              setSearchTerm(e.target.value);
+              const value = e.target.value;
+              setSearchTerm(value);
+              
+              // Debounce - 500ms kutib qidirish
+              const timeoutId = setTimeout(() => {
+                handleSearch(value);
+              }, 500);
+              
+              return () => clearTimeout(timeoutId);
             }}
             className="w-full border border-gray-600 bg-[#2a2a2a] p-3 rounded-lg focus:outline-none focus:border-yellow-400 text-gray-100 placeholder-gray-500"
           />
@@ -356,7 +416,14 @@ const fetchClasses = async () => {
           <select
             value={filterClass}
             onChange={(e) => {
-              setFilterClass(Number(e.target.value));
+              const classId = Number(e.target.value);
+              setFilterClass(classId);
+              
+              if (searchTerm.trim() && isSearching) {
+                handleSearch(searchTerm);
+              } else {
+                fetchStudents(1, classId);
+              }
             }}
             className="w-full px-4 pr-10 border border-gray-600 bg-[#2a2a2a] p-3 rounded-lg focus:outline-none focus:border-yellow-400 text-gray-100 appearance-none"
           >
@@ -384,6 +451,8 @@ const fetchClasses = async () => {
             onClick={() => {
               setSearchTerm("");
               setFilterClass(0);
+              setIsSearching(false);
+              fetchStudents(1, 0);
             }}
             className="px-4 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition border border-red-500/30 whitespace-nowrap"
           >
@@ -443,6 +512,7 @@ const fetchClasses = async () => {
                         setSelectedStudent(s);
                         setEditForm({
                           id: s.id,
+                          username:s.username,
                           first_name: s.first_name,
                           last_name: s.last_name,
                           gender: s.gender,
@@ -480,7 +550,7 @@ const fetchClasses = async () => {
         </table>
       </div>
 
-      {totalPages > 1 && (
+      {totalPages > 1 && !isSearching && (
         <div className="mt-6">
           <Pagination
             totalPages={totalPages}
@@ -489,6 +559,7 @@ const fetchClasses = async () => {
           />
         </div>
       )}
+
       {/* Parolni tiklash Modal */}
       <AnimatePresence>
         {resetModal && (
@@ -623,6 +694,14 @@ const fetchClasses = async () => {
         {showEditModal && (
           <ModalWrapper onClose={() => setShowEditModal(false)} title="✏️ O'quvchini tahrirlash">
             <div className="space-y-3">
+            <input
+                type="text"
+                placeholder="Username"
+                value={editForm.username}
+                onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
+                required
+              />
               <input
                 type="text"
                 placeholder="Ism"

@@ -46,10 +46,13 @@ const Cart = () => {
     try {
       setLoading(true);
       const res = await getMyCart();
-      setCart(res.data);
+      // Handle both paginated and direct array responses
+      const cartData = res.data.results || res.data;
+      const cartArray = Array.isArray(cartData) ? cartData : [];
+      setCart(cartArray);
       
       // Faqat mavjud (count > 0) mahsulotlarni default tanlash
-      const availableItems = res.data
+      const availableItems = cartArray
         .filter((item: CartItem) => item.product_detail.count > 0)
         .map((item: CartItem) => item.id);
       

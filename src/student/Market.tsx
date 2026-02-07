@@ -39,7 +39,9 @@ const Market = () => {
 
       // Faqat o'sha user ning sevimlilarini olish
       const favRes = await getFavourite();
-      setFavourites(favRes.data);
+      // Handle both paginated and direct array responses
+      const favData = favRes.data.results || favRes.data;
+      setFavourites(Array.isArray(favData) ? favData : []);
     } catch (err) {
       console.error(err);
       toast.error("Ma'lumotlarni olishda xatolik!");

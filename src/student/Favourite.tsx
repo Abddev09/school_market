@@ -26,7 +26,9 @@ const Favourite = () => {
     try {
       setLoading(true);
       const favRes = await getFavourite();
-      setFavourites(favRes.data);
+      // Handle both paginated and direct array responses
+      const data = favRes.data.results || favRes.data;
+      setFavourites(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
       toast.error("Ma'lumotlarni olishda xatolik!");

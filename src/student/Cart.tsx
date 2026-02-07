@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Trash2, ShoppingBag, AlertCircle, Loader2 } from "lucide-react";
 import { createOrder, deleteCart, getMyCart, getOneUsers } from "../hooks/apis";
+import { cache } from "../utils/cache";
 
 interface ProductDetail {
   id: number;
@@ -34,7 +35,7 @@ const Cart = () => {
 
   const fetchProfile = async () => {
     try {
-      const id = localStorage.getItem("id") || "1";
+      const id = cache.getId() || "1";
       const res = await getOneUsers(id); 
       setBalance(res.data.ball || 0); 
     } catch {

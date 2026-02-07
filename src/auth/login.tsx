@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import LightRays from "../components/bg"; // joylashuvni o'zingga moslashtir
 import HelmetPage from "../utils/Helmet";
 import Snowfall from 'react-snowfall';
+import { cache } from "../utils/cache";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -20,14 +21,11 @@ const Login = () => {
   setLoading(true);
   try {
     const res = await login(form);
-    // 🔐 token va role’ni saqlaymiz (role hash qilinadi)
-    localStorage.setItem("token", res.data.access_token);
-
-    // role ni base64 bilan hash qilish (oddiy, tez, front uchun yetarli)
-    const hashedRole = btoa(res.data.user.role);
-    localStorage.setItem("role", hashedRole);
-    localStorage.setItem("id",res.data.user.id)
-    const role = res.data.user.role
+    // 🔐 Cache ga token, role va id'ni saqlaymiz
+    cache.setToken(res.data.access_token);
+    cache.setRole(res.data.user.role);
+    cache.setId(res.data.user.id);
+    const role = res.data.user.role;
     toast.success("Kirish muvaffaqiyatli!");
     if(role === 1 || role === 0){
       navigate("/teachers");

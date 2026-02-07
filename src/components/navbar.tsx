@@ -10,6 +10,7 @@ import {
   FaHistory,
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
+import { cache } from "../utils/cache";
 
 type Props = {
   onNavigate?: () => void;
@@ -21,7 +22,7 @@ const Navbar: React.FC<Props> = ({ onNavigate }) => {
   const location = useLocation();
   const isHome = location.pathname === "/login" || location.pathname === "/";
   
-  const storedRole = localStorage.getItem("role");
+  const storedRole = cache.getRole();
   let role: string | null = null;
 
   try {

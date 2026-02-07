@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { FaPlus, FaEllipsisV, FaTimes } from "react-icons/fa";
 import { createClass, createGrade, getMyStudents, getOneUsers, updateUser } from "../hooks/apis";
+import { cache } from "../utils/cache";
 import ImportButton from "../components/Import";
 import { Check } from "lucide-react";
 import { CenteredProgressLoader } from "../components/loading";
@@ -51,7 +52,7 @@ const Teacher = () => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
 
-  const currentTeacherId = Number(localStorage.getItem("id"));
+  const currentTeacherId = cache.getIdAsNumber() || 0;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);

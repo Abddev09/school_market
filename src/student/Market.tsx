@@ -3,6 +3,7 @@ import { Heart, ShoppingCart, PackageX, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { createCart, createFavourite, getFavourite, getProducts } from "../hooks/apis";
+import { cache } from "../utils/cache";
 
 interface Product {
   id: number;
@@ -29,7 +30,7 @@ const Market = () => {
   const [addingToCart, setAddingToCart] = useState<number | null>(null);
   const [togglingFav, setTogglingFav] = useState<number | null>(null);
 
-  const userId = localStorage.getItem("id");
+  const userId = cache.getId();
 
   const fetchData = async () => {
     try {

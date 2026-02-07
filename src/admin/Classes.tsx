@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 import { getClasses, createClass, updateClass, deleteClass, getTeacherAll } from "../hooks/apis";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { CenteredProgressLoader } from "../components/loading";
+import Pagination from "../components/Pagination";
 
 interface Teacher {
   id: number;
@@ -40,7 +42,7 @@ const Classes = () => {
   });
 
   const [currentPage, setCurrentPage] = useState(1);
-  const perPage = 20;
+  const [perPage, setPerPage] = useState(20);
   const [totalCount, setTotalCount] = useState(0);
   const [serverPaginated, setServerPaginated] = useState(false);
 
@@ -67,7 +69,12 @@ const fetchClasses = async (page: number = 1) => {
     setTotalCount(count);
     setCurrentPage(page);
     setServerPaginated(hasResults);
-    console.log(res)
+    if (hasResults) {
+      const pageSize = Array.isArray(res.data.results) ? res.data.results.length : 0;
+      if (pageSize > 0 && (res.data.count ?? 0) > pageSize) {
+        setPerPage(pageSize);
+      }
+    }
     const normalizedAndSorted = [...data]
       .map((item: any) => ({
         ...item,
@@ -106,8 +113,13 @@ const fetchClasses = async (page: number = 1) => {
     }
   };
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     fetchClasses(currentPage);
+  }, [currentPage]);
+
+  useEffect(() => {
     fetchTeachers();
   }, []);
 
@@ -129,8 +141,24 @@ const fetchClasses = async (page: number = 1) => {
         teacher: 0,
       });
       fetchClasses(currentPage);
-    } catch {
-      toast.error("Sinfni qo'shishda xatolik!");
+    } catch (error: any) {
+      console.error("Create class error:", error);
+      const serverErr = error?.response?.data ?? error;
+      let msg = "Sinfni qo'shishda xatolik!";
+      if (typeof serverErr === "string") msg = serverErr;
+      else if (serverErr?.name) msg = serverErr.name;
+      else if (serverErr?.detail) msg = serverErr.detail;
+      else if (typeof serverErr === "object") {
+        const parts: string[] = [];
+        for (const k of Object.keys(serverErr)) {
+          const v = serverErr[k];
+          if (Array.isArray(v)) parts.push(v.join(" "));
+          else if (typeof v === "string") parts.push(v);
+        }
+        if (parts.length) msg = parts.join(" ");
+      }
+
+      toast.error(msg);
     } finally {
       setModalLoading(false);
     }
@@ -151,9 +179,24 @@ const fetchClasses = async (page: number = 1) => {
       setShowEditModal(false);
       setSelectedClass(null);
       fetchClasses(currentPage);
-    } catch (error) {
-      console.error("Update xatosi:", error);
-      toast.error("Yangilashda xatolik!");
+    } catch (error: any) {
+      console.error("Update error:", error);
+      const serverErr = error?.response?.data ?? error;
+      let msg = "Yangilashda xatolik!";
+      if (typeof serverErr === "string") msg = serverErr;
+      else if (serverErr?.name) msg = serverErr.name;
+      else if (serverErr?.detail) msg = serverErr.detail;
+      else if (typeof serverErr === "object") {
+        const parts: string[] = [];
+        for (const k of Object.keys(serverErr)) {
+          const v = serverErr[k];
+          if (Array.isArray(v)) parts.push(v.join(" "));
+          else if (typeof v === "string") parts.push(v);
+        }
+        if (parts.length) msg = parts.join(" ");
+      }
+
+      toast.error(msg);
     } finally {
       setModalLoading(false);
     }
@@ -234,7 +277,14 @@ const fetchClasses = async (page: number = 1) => {
                   className="border-b border-gray-700 hover:bg-yellow-400/10 transition"
                 >
                   <td className="p-3 text-gray-300">{(currentPage - 1) * perPage + i + 1}</td>
-                  <td className="p-3 text-gray-100 font-semibold">{c.name}</td>
+                  <td className="p-3 text-gray-100 font-semibold">
+                    <button
+                      onClick={() => navigate(`/students?class=${c.id}`)}
+                      className="text-left w-full text-yellow-400 hover:underline"
+                    >
+                      {c.name}
+                    </button>
+                  </td>
                   <td className="p-3 text-gray-400">{getTeacherName(c.teacher)}</td>
                   <td className="p-3 flex justify-center gap-4">
                     <button
@@ -269,20 +319,12 @@ const fetchClasses = async (page: number = 1) => {
       </div>
 
       {totalPages > 1 && (
-        <div className="flex justify-center mt-6 gap-2">
-          {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => fetchClasses(i + 1)}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition ${
-                currentPage === i + 1
-                  ? "bg-yellow-500 text-black"
-                  : "bg-[#2a2a2a] text-gray-300 hover:bg-yellow-400/20"
-              }`}
-            >
-              {i + 1}
-            </button>
-          ))}
+        <div className="mt-6">
+          <Pagination
+            totalPages={totalPages}
+            currentPage={currentPage}
+            onPageChange={(p) => setCurrentPage(p)}
+          />
         </div>
       )}
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaPlus, FaEdit, FaTrash, FaEllipsisV, FaKey, FaFileExcel } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaEllipsisV, FaKey, FaFileExcel, FaSearch } from "react-icons/fa";
 import { createUser, deleteUser, updateUser, getClasses, updatePassword, getMyStudents, createClass } from "../hooks/apis";
 import { toast } from "sonner";
 import ImportButton from "../components/Import";
@@ -27,6 +28,7 @@ interface Class {
 }
 
 const MyStudents = () => {
+  const navigate = useNavigate();
   const [students, setStudents] = useState<User[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -462,18 +464,30 @@ const MyStudents = () => {
 
       {/* Search Bar */}
       <div className="mb-4 md:mb-6 flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center bg-[#212121]/90 p-3 md:p-4 rounded-lg md:rounded-xl border border-yellow-500/30">
-        <div className="flex-1">
-          <input
-            type="text"
-            placeholder="Ism yoki familiya bo'yicha qidirish..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="w-full border border-yellow-500/40 bg-[#2a2a2a] p-2 sm:p-2.5 text-xs sm:text-sm rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100 placeholder-gray-500"
-          />
-        </div>
+          <div className="flex-1 relative flex items-center">
+            <input
+              type="text"
+              placeholder="Ism yoki familiya bo'yicha qidirish..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              onKeyDown={(e) => e.key === "Enter" && setCurrentPage(1)}
+              className="w-full border border-yellow-500/40 bg-[#2a2a2a] p-2 sm:p-2.5 text-xs sm:text-sm rounded-lg focus:outline-none focus:border-yellow-500 text-gray-100 placeholder-gray-500 pr-12"
+            />
+
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setCurrentPage(1)}
+              aria-label="Qidirish"
+              className={`absolute right-2 p-2 rounded-md transition ${searchTerm.trim() ? "bg-yellow-500 text-black" : "bg-gray-700 text-gray-400 cursor-not-allowed"}`}
+              disabled={!searchTerm.trim()}
+            >
+              <FaSearch />
+            </motion.button>
+          </div>
 
         {searchTerm && (
           <button
@@ -537,8 +551,13 @@ const MyStudents = () => {
                   <td className="px-4 py-3  text-sm font-medium text-gray-100">
                     {s.first_name} {s.last_name}
                   </td>
-                  <td className="px-4 py-3  text-sm text-gray-400">
-                    {s.username}
+                  <td className="px-4 py-3  text-sm">
+                    <button
+                      onClick={() => navigate(`/user/${s.student_id}`)}
+                      className="text-yellow-400 hover:text-yellow-300 hover:underline transition"
+                    >
+                      {s.username}
+                    </button>
                   </td>
                   <td className="px-4 py-3  text-sm text-gray-300">
                     {s.classe_name}
@@ -632,7 +651,12 @@ const MyStudents = () => {
                         <h3 className="text-sm font-semibold text-gray-100 truncate capitalize">
                         {s.first_name} {s.last_name}
                       </h3>
-                      <p className="text-xs text-gray-400 truncate">{s.username}</p>
+                      <button
+                        onClick={() => navigate(`/user/${s.student_id}`)}
+                        className="text-xs text-yellow-400 hover:text-yellow-300 hover:underline transition"
+                      >
+                        {s.username}
+                      </button>
                       
                       {/* Info Grid */}
                       <div className="mt-2 flex gap-4 text-xs">

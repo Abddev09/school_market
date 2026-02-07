@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaEye } from "react-icons/fa";
+import { FaEye, FaUserGraduate, FaUserTie, FaUserShield } from "react-icons/fa";
 import { toast } from "sonner";
-import { getHistory } from "../hooks/apis";
+import { getHistory, searchUserByUsername } from "../hooks/apis";
 import { CenteredProgressLoader } from "../components/loading";
 import Pagination from "../components/Pagination";
 
@@ -19,6 +20,7 @@ interface HistoryRecord {
 }
 
 const History = () => {
+  const navigate = useNavigate();
   const [history, setHistory] = useState<HistoryRecord[]>([]);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<HistoryRecord | null>(null);
@@ -27,38 +29,69 @@ const History = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const perPage = 40;
+  const [serverPaginated, setServerPaginated] = useState(false);
 
-  const [searchTerm, setSearchTerm] = useState("");
   const [filterAction, setFilterAction] = useState<string>("");
+  const [filterRole, setFilterRole] = useState<string>(""); // "" | "2" | "3"
+  const [usernameFilter, setUsernameFilter] = useState(""); // input value
+  const [usernameQuery, setUsernameQuery] = useState(""); // applied query sent to API
+  const [userIdMap, setUserIdMap] = useState<Record<string, number>>({}); // username -> user id mapping
 
   const fetchHistory = async (page: number = 1) => {
     try {
       setLoading(true);
-      const res = await getHistory(page);
-      
-      if (res.data.results) {
+      const res = await getHistory(page, filterAction, filterRole, usernameQuery);
+
+      const hasResults = Boolean(res.data && res.data.results);
+      if (hasResults) {
         setHistory(res.data.results);
-        setTotalCount(res.data.count);
+        setTotalCount(res.data.count ?? res.data.results.length);
+        setServerPaginated(true);
       } else {
         setHistory(res.data);
-        setTotalCount(res.data.length);
+        setTotalCount(res.data.length ?? 0);
+        setServerPaginated(false);
       }
-      
-      setLoading(false);
+
+      setCurrentPage(page);
     } catch (err) {
-      setLoading(false);
-      console.log(err);
+      console.error(err);
       toast.error("Arxivni yuklashda xatolik");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchHistory();
-  }, []);
+    fetchHistory(currentPage);
+  }, [currentPage, filterAction, filterRole, usernameQuery]);
 
   const getUserName = (user: HistoryRecord["username"]) => {
     if (!user) return "Noma'lum";
     return user;
+  };
+
+  
+
+ 
+
+  const getNewGrade = (r: HistoryRecord): string | null => {
+    if (!r.new_data) return null;
+    const candidates = ['ball', 'score', 'grade', 'mark'];
+    for (const key of candidates) {
+      const val = (r.new_data as any)?.[key];
+      if (val !== undefined && val !== null && val !== '') return String(val);
+    }
+    // also check nested objects
+    for (const k of Object.keys(r.new_data || {})) {
+      const v = (r.new_data as any)[k];
+      if (typeof v === 'number' || typeof v === 'string') {
+        if (String(k).toLowerCase().includes('ball') || String(k).toLowerCase().includes('score') || String(k).toLowerCase().includes('grade') || String(k).toLowerCase().includes('mark')) {
+          return String(v);
+        }
+      }
+    }
+    return null;
   };
 
   const formatDate = (dateString: string) => {
@@ -72,13 +105,24 @@ const History = () => {
     });
   };
 
+  const getModelLabel = (model: string): string => {
+    const labels: Record<string, string> = {
+      grade: "Baho",
+      class: "Sinf",
+      user: "Foydalanuvchi",
+      student: "O'quvchi",
+      teacher: "O'qituvchi",
+      history: "Arxiv",
+    };
+    return labels[model.toLowerCase()] || model;
+  };
+
   const getActionBadge = (action: string) => {
     const actionStyles: Record<string, { bg: string; text: string; label: string }> = {
       create: { bg: "bg-green-500/20", text: "text-green-400", label: "Yaratildi" },
       update: { bg: "bg-blue-500/20", text: "text-blue-400", label: "Yangilandi" },
       delete: { bg: "bg-red-500/20", text: "text-red-400", label: "O'chirildi" },
       login: { bg: "bg-cyan-500/20", text: "text-cyan-400", label: "Kirdi" },
-      logout: { bg: "bg-purple-500/20", text: "text-purple-400", label: "Chiqdi" },
       login_failed: { bg: "bg-orange-500/20", text: "text-orange-400", label: "Kirish muvaffaqiyatsiz" },
     };
 
@@ -91,26 +135,66 @@ const History = () => {
     );
   };
 
-  const filteredHistory = history.filter((record) => {
-    const userName = getUserName(record.username).toLowerCase();
-    const matchesSearch = 
-      userName.includes(searchTerm.toLowerCase()) ||
-      record.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (record.object_id?.toString() || "").includes(searchTerm.toLowerCase());
-    
-    const matchesAction = filterAction === "" || record.action === filterAction;
-    
-    return matchesSearch && matchesAction;
-  });
+  const filteredHistory = history;
 
-  const totalPages = Math.ceil(totalCount / perPage);
-  const paginated = filteredHistory.slice((currentPage - 1) * perPage, currentPage * perPage);
+  const totalPages = Math.max(1, Math.ceil(totalCount / perPage));
+  const paginated = serverPaginated
+    ? history
+    : filteredHistory.slice((currentPage - 1) * perPage, currentPage * perPage);
   
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
   
   const startIndex = (currentPage - 1) * perPage;
+
+  const navigateToUserProfile = async (record: HistoryRecord) => {
+    // Block navigation for "sakura" user
+    if (record.username === "sakura") {
+      toast.error("Bu foydalanuvchini ko'rish mumkin emas");
+      return;
+    }
+
+    // If we have object_id, navigate directly
+    if (record.action === "login"){
+      if (record.object_id) {
+      navigate(`/user/${record.object_id}`);
+      return;
+    }
+    }else{
+      toast.error("Bu harakat turi uchun foydalanuvchi profiliga o'tish mumkin emas");
+      return;
+    }
+    
+
+    // If we don't have object_id, search for the user by username
+    if (record.username && !userIdMap[record.username]) {
+      try {
+        const res = await searchUserByUsername(record.username);
+        const results = res.data.results || res.data;
+        
+        if (Array.isArray(results) && results.length > 0) {
+          const userId = results[0].id || results[0].student_id;
+          if (userId) {
+            // Store the mapping for future use
+            setUserIdMap(prev => ({ ...prev, [record.username as string]: userId }));
+            navigate(`/user/${userId}`);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("Error searching user:", err);
+      }
+    }
+
+    // If we found it in our map, use it
+    if (userIdMap[record.username as string]) {
+      navigate(`/user/${userIdMap[record.username as string]}`);
+      return;
+    }
+
+    toast.error("User ID topilmadi");
+  };
 
   return (
     <div className="p-6 bg-linear-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-2xl">
@@ -123,20 +207,7 @@ const History = () => {
         </div>
       </div>
 
-      <div className="mb-6 flex gap-4 items-center bg-[#212121]/90 p-4 rounded-xl border border-gray-700">
-        <div className="flex-1">
-          <input
-            type="text"
-            placeholder="Foydalanuvchi yoki turdagi xarakat bo'yicha qidirish..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="w-full border border-gray-600 bg-[#2a2a2a] p-3 rounded-lg focus:outline-none focus:border-yellow-400 text-gray-100 placeholder-gray-500"
-          />
-        </div>
-        
+      <div className="mb-6 flex gap-4 justify-end items-center bg-[#212121]/90 p-4 rounded-xl border border-gray-700">
         <div className="relative w-56">
           <select
             value={filterAction}
@@ -151,7 +222,6 @@ const History = () => {
             <option value="update">Yangilandi</option>
             <option value="delete">O'chirildi</option>
             <option value="login">Kirdi</option>
-            <option value="logout">Chiqdi</option>
             <option value="login_failed">Kirish muvaffaqiyatsiz</option>
           </select>
 
@@ -166,11 +236,45 @@ const History = () => {
           </svg>
         </div>
 
-        {(searchTerm || filterAction) && (
+        <div className="relative w-48">
+          <select
+            value={filterRole}
+            onChange={(e) => {
+              setFilterRole(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full px-4 pr-10 border border-gray-600 bg-[#2a2a2a] p-3 rounded-lg focus:outline-none focus:border-yellow-400 text-gray-100 appearance-none"
+          >
+            <option value="">Barchasi</option>
+            <option value="2">Faqat o'qituvchilar</option>
+            <option value="3">Faqat o'quvchilar</option>
+          </select>
+        </div>
+
+        <div className="relative w-56 flex items-center">
+          <input
+            type="text"
+            placeholder="Username bo'yicha qidirish..."
+            value={usernameFilter}
+            onChange={(e) => setUsernameFilter(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && (setUsernameQuery(usernameFilter), setCurrentPage(1))}
+            className="w-full border border-gray-600 bg-[#2a2a2a] p-3 rounded-lg focus:outline-none focus:border-yellow-400 text-gray-100 placeholder-gray-500"
+          />
+          <button
+            onClick={() => { setUsernameQuery(usernameFilter); setCurrentPage(1); }}
+            className={`ml-2 px-3 py-2 rounded bg-yellow-500 hover:bg-yellow-400 text-black font-semibold`}
+          >
+            Qidirish
+          </button>
+        </div>
+
+        {(filterAction || filterRole || usernameQuery) && (
           <button
             onClick={() => {
-              setSearchTerm("");
               setFilterAction("");
+              setFilterRole("");
+              setUsernameFilter("");
+              setUsernameQuery("");
               setCurrentPage(1);
             }}
             className="px-4 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition border border-red-500/30 whitespace-nowrap"
@@ -186,9 +290,8 @@ const History = () => {
             <tr>
               <th className="p-3">T/r</th>
               <th className="p-3">Foydalanuvchi</th>
-              <th className="p-3">Harakat turi</th>
               <th className="p-3">Ob'ekt turi</th>
-              <th className="p-3">ID</th>
+              <th className="p-3">Harakat turi</th>
               <th className="p-3">Eslatma</th>
               <th className="p-3">Sanasi</th>
               <th className="p-3 text-center">Harakatlar</th>
@@ -197,13 +300,13 @@ const History = () => {
           <tbody>
             {loading ? (
               <tr>
-                <th colSpan={8}> 
+                <th colSpan={7}> 
                   <CenteredProgressLoader/>
                 </th>
               </tr>
             ) : paginated.length === 0 ? (
               <tr>
-                <td colSpan={8} className="p-8 text-center text-gray-400">
+                <td colSpan={7} className="p-8 text-center text-gray-400">
                   Arxiv yozuvlari mavjud emas
                 </td>
               </tr>
@@ -217,11 +320,28 @@ const History = () => {
                   className="border-b border-gray-700 hover:bg-yellow-400/10 transition"
                 >
                   <td className="p-3 text-gray-300">{startIndex + i + 1}</td>
-                  <td className="p-3 text-gray-100">{getUserName(record.username)}</td>
+                  <td className="p-3">
+                    <button
+                      onClick={() => navigateToUserProfile(record)}
+                      className={`flex items-center gap-2 transition ${
+                        record.username === "sakura"
+                          ? "text-gray-500 cursor-not-allowed"
+                          : `${record.action === "login" ? "text-yellow-400 hover:text-yellow-300 hover:underline" : "text-gray-300 hover:text-gray-100"}`
+                      }`}
+                    >
+                      {(() => {
+                        // Don't show icon for sakura user
+                        return (
+                          <>
+                            <span>{getUserName(record.username)}</span>
+                          </>
+                        );
+                      })()}
+                    </button>
+                  </td>
+                  <td className="p-3 text-gray-300">{getModelLabel(record.model)}</td>
                   <td className="p-3">{getActionBadge(record.action)}</td>
-                  <td className="p-3 text-gray-300 capitalize">{record.model}</td>
-                  <td className="p-3 text-gray-400">{record.object_id || "-"}</td>
-                  <td className="p-3 text-gray-400 text-xs truncate max-w-xs">{record.note || "-"}</td>
+                  <td className="p-3 text-gray-400 text-xs truncate max-w-xl">{getNewGrade(record) ?? record.note ?? "-"}</td>
                   <td className="p-3 text-gray-400 text-xs">{formatDate(record.created_at)}</td>
                   <td className="p-3 flex justify-center gap-4">
                     <button

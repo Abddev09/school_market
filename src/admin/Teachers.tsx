@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaPlus, FaEdit, FaTrash, FaKey } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaKey, FaSearch } from "react-icons/fa";
 import { createUser, deleteUser, getTeacherAll, updatePassword, updateUser } from "../hooks/apis";
 import { toast } from "sonner";
 import { CenteredProgressLoader } from "../components/loading";
@@ -18,6 +19,7 @@ interface User {
 }
 
 const Teachers = () => {
+  const navigate = useNavigate();
   const [teachers, setTeachers] = useState<User[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -195,7 +197,7 @@ const Teachers = () => {
 
       {/* Search va Filter */}
       <div className="mb-6 flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center bg-[#212121]/90 p-3 sm:p-4 rounded-xl border border-gray-700">
-        <div className="flex-1">
+        <div className="flex-1 relative flex items-center">
           <input
             type="text"
             placeholder="Ism yoki familiya bo'yicha qidirish..."
@@ -204,8 +206,20 @@ const Teachers = () => {
               setSearchTerm(e.target.value);
               setCurrentPage(1);
             }}
-            className="w-full border border-gray-600 bg-[#2a2a2a] p-2 sm:p-3 rounded-lg focus:outline-none focus:border-yellow-400 text-gray-100 placeholder-gray-500 text-sm sm:text-base"
+            onKeyDown={(e) => e.key === "Enter" && setCurrentPage(1)}
+            className="w-full border border-gray-600 bg-[#2a2a2a] p-2 sm:p-3 rounded-lg focus:outline-none focus:border-yellow-400 text-gray-100 placeholder-gray-500 text-sm sm:text-base pr-12"
           />
+
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setCurrentPage(1)}
+            aria-label="Qidirish"
+            className={`absolute right-2 p-2 rounded-md transition ${searchTerm.trim() ? "bg-yellow-500 text-black" : "bg-gray-700 text-gray-400 cursor-not-allowed"}`}
+            disabled={!searchTerm.trim()}
+          >
+            <FaSearch />
+          </motion.button>
         </div>
 
         {searchTerm && (
@@ -245,7 +259,14 @@ const Teachers = () => {
                   className="border-b border-gray-700 hover:bg-yellow-400/10 transition"
                 >
                   <td className="p-3 text-gray-300">{startIndex + i + 1}</td>
-                  <td className="p-3 text-gray-300">{t.username}</td>
+                  <td className="p-3 text-gray-300">
+                    <button
+                      onClick={() => navigate(`/user/${t.id}`)}
+                      className="text-yellow-400 hover:text-yellow-300 hover:underline transition"
+                    >
+                      {t.username}
+                    </button>
+                  </td>
                   <td className="p-3 text-gray-100">{t.first_name}</td>
                   <td className="p-3 text-gray-100">{t.last_name}</td>
                   <td className="p-3 text-gray-400">{t.gender ? "Erkak" : "Ayol"}</td>
@@ -325,7 +346,12 @@ const Teachers = () => {
                     <h3 className="text-base sm:text-lg font-bold text-gray-100">
                       {t.first_name} {t.last_name}
                     </h3>
-                    <p className="text-xs sm:text-sm text-gray-400 mt-1">@{t.username}</p>
+                    <button
+                      onClick={() => navigate(`/user/${t.id}`)}
+                      className="text-xs sm:text-sm text-yellow-400 hover:text-yellow-300 hover:underline transition mt-1"
+                    >
+                      @{t.username}
+                    </button>
                   </div>
                   <div className="flex gap-2">
                     <button

@@ -46,20 +46,44 @@ export const deleteUser = async (data: any) => {
 };
 
 
-export const getClasses = async (page: number = 1) => {
-  const res = await api.get(`classes/?page=${page}`);
+export const getClasses = async (page: number | string = 1) => {
+  // Accept either a page number or a full/relative URL returned by the API `next` field.
+  if (typeof page === "number") {
+    return await api.get(`classes/?page=${page}`);
+  }
+
+  // If a string is passed, assume it's a URL (absolute or relative) and request it directly.
+  return await api.get(page);
+};
+
+export const getClassesByTeacher = async (teacherId: number) => {
+  const res = await api.get(`teachers/classe/?teacher_id=${teacherId}`);
   return res;
 };
 
 export const createClass = async (data: any) => {
-  const res = await api.post("classes/", data);
-  return res;
+  try {
+    const res = await api.post("classes/", data);
+    return res;
+  } catch (error: any) {
+    console.log("STATUS:", error.response?.status);
+    console.log("ERROR DATA:", error.response?.data);
+    console.log("FULL ERROR:", error);
+    throw error.response?.data || error;
+  }
 };
 
 // ⚙️ PATCH — id data ichida ketadi
 export const updateClass = async (data: any) => {
-  const res = await api.patch(`classes/${data.id}/`, data);
-  return res;
+  try {
+    const res = await api.patch(`classes/${data.id}/`, data);
+    return res;
+  } catch (error: any) {
+    console.log("STATUS:", error.response?.status);
+    console.log("ERROR DATA:", error.response?.data);
+    console.log("FULL ERROR:", error);
+    throw error.response?.data || error;
+  }
 };
 
 // 🗑️ DELETE — id ham data ichida yuboriladi
@@ -267,10 +291,26 @@ export const searchStudent = async (s:string,page:number) => {
   return res;
 }
 
+export const searchUserByUsername = async (username: string) => {
+  const res = await api.get(`search?s=${username}&page=1`);
+  return res;
+}
 
 // 📊 GET — barcha arxiv yozuvlarini olish
-export const getHistory = async (page: number = 1) => {
-  const res = await api.get(`history/?page=${page}`);
+export const getHistory = async (
+  page: number = 1,
+  action: string = "",
+  role: string | number = "",
+  username: string = ""
+) => {
+  const params: string[] = [];
+  params.push(`page=${page}`);
+  if (action) params.push(`action=${encodeURIComponent(action)}`);
+  if (role !== "" && role !== null && role !== undefined) params.push(`role=${encodeURIComponent(String(role))}`);
+  if (username) params.push(`username=${encodeURIComponent(username)}`);
+
+  const query = params.length ? `?${params.join("&")}` : "";
+  const res = await api.get(`history/${query}`);
   return res;
 };
 

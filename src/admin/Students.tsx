@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaPlus, FaEdit, FaTrash, FaFileExcel } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaFileExcel, FaSearch } from "react-icons/fa";
 import { createUser, deleteUser, updateUser, getClasses, updatePassword, getStudentsByClass, searchStudent } from "../hooks/apis";
 import { toast } from "sonner";
 import ImportButton from "../components/Import";
@@ -29,6 +30,8 @@ interface Class {
 }
 
 const Students = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [students, setStudents] = useState<User[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -163,7 +166,21 @@ const Students = () => {
   };
 
   useEffect(() => {
-    fetchStudents(1, filterClass);
+    const params = new URLSearchParams(location.search);
+    const classParam = params.get("class");
+
+    if (classParam) {
+      const id = Number(classParam);
+      setFilterClass(id);
+      fetchStudents(1, id);
+    } else if ((location as any).state?.classId) {
+      const id = Number((location as any).state.classId);
+      setFilterClass(id);
+      fetchStudents(1, id);
+    } else {
+      fetchStudents(1, filterClass);
+    }
+
     fetchClasses();
   }, []);
 
@@ -398,15 +415,26 @@ const Students = () => {
       </div>
 
       <div className="mb-6 flex gap-4 items-center bg-[#212121]/90 p-4 rounded-xl border border-gray-700">
-        <div className="flex-1">
+        <div className="flex-1 relative flex items-center">
           <input
             type="text"
             placeholder="Ism yoki familiya bo'yicha qidirish..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch(searchTerm, 1)}
-            className="w-full border border-gray-600 bg-[#2a2a2a] p-3 rounded-lg focus:outline-none focus:border-yellow-400 text-gray-100 placeholder-gray-500"
+            className="w-full border border-gray-600 bg-[#2a2a2a] p-3 rounded-lg focus:outline-none focus:border-yellow-400 text-gray-100 placeholder-gray-500 pr-12"
           />
+
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => handleSearch(searchTerm, 1)}
+            aria-label="Qidirish"
+            className={`absolute right-2 p-2 rounded-md transition ${searchTerm.trim() ? "bg-yellow-500 text-black" : "bg-gray-700 text-gray-400 cursor-not-allowed"}`}
+            disabled={!searchTerm.trim()}
+          >
+            <FaSearch />
+          </motion.button>
         </div>
 
         <div className="relative w-42">
@@ -496,7 +524,14 @@ const Students = () => {
                   className="border-b border-gray-700 hover:bg-yellow-400/10 transition"
                 >
                   <td className="p-3 text-gray-300">{startIndex + i + 1}</td>
-                  <td className="p-3 text-gray-300">{s.username}</td>
+                  <td className="p-3">
+                    <button
+                      onClick={() => navigate(`/user/${s.id}`)}
+                      className="text-yellow-400 hover:text-yellow-300 hover:underline transition"
+                    >
+                      {s.username}
+                    </button>
+                  </td>
                   <td className="p-3 text-gray-100">{s.first_name}</td>
                   <td className="p-3 text-gray-100">{s.last_name}</td>
                   <td className="p-3 text-gray-100">{s.ball}</td>

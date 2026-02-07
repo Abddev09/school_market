@@ -12,6 +12,7 @@ import Teachers from "./admin/Teachers";
 import Shop from "./admin/Shop";
 import Orders from "./admin/Orders";
 import History from "./admin/History";
+import UserProfile from "./admin/UserProfile";
 import Teacher from "./teacher/Teacher";
 import MyStudents from "./teacher/MyStudents";
 import { Toaster } from "sonner";
@@ -49,6 +50,7 @@ const App = () => {
         { path: "/shop", element: <Shop /> },
         { path: "/orders", element: <Orders /> },
         { path: "/history", element: <History /> },
+        { path: "/user/:id", element: <UserProfile /> },
         { path: "*", element: <DashboardLayout isPublic>
       <NotFound />
     </DashboardLayout> },
@@ -65,6 +67,7 @@ const App = () => {
       children: [
         { path: "/dashboard/teacher", element: <Teacher /> },
         { path: "/my-students", element: <MyStudents /> },
+        { path: "/user/:id", element: <UserProfile /> },
         { path: "*", element: <DashboardLayout isPublic>
       <NotFound />
     </DashboardLayout> },

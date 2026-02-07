@@ -44,6 +44,7 @@ const Students = () => {
   const [addForm, setAddForm] = useState({
     first_name: "",
     last_name: "",
+    username:"",
     password: "",
     role: 3,
     gender: true,
@@ -254,6 +255,7 @@ const Students = () => {
       setAddForm({
         first_name: "",
         last_name: "",
+        username:"",
         password: "",
         role: 3,
         gender: true,

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaKey } from "react-icons/fa";
 import { createUser, deleteUser, getTeacherAll, updatePassword, updateUser } from "../hooks/apis";
 import { toast } from "sonner";
 import { CenteredProgressLoader } from "../components/loading";
@@ -8,7 +8,7 @@ import Pagination from "../components/Pagination";
 
 interface User {
   id: number;
-  username:string;
+  username: string;
   first_name: string;
   last_name: string;
   role: number;
@@ -23,15 +23,20 @@ const Teachers = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState<User | null>(null);
-   const [selectedUser,setSelectedUser] = useState<User | null>(null)
-    const [resetPassword,setResetPassword] = useState("")
-    const [resetModal,setResetModal] = useState(false)
-    const [loading,setLoading] = useState(false)
-      const [submitting, setSubmitting] = useState(false);
-  // ✅ Har bir modal uchun alohida state
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetModal, setResetModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterClass] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const perPage = 40;
+
   const [addForm, setAddForm] = useState({
     first_name: "",
     last_name: "",
+    username: "",
     password: "",
     role: 2,
     gender: true,
@@ -40,24 +45,21 @@ const Teachers = () => {
   const [editForm, setEditForm] = useState({
     id: 0,
     first_name: "",
-    username:"",
+    username: "",
     last_name: "",
     role: 2,
     gender: true,
   });
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const perPage = 40;
-
   const fetchTeachers = async () => {
     try {
       setLoading(true);
       const res = await getTeacherAll();
-      const data = res.data
+      const data = res.data;
       setTeachers(data);
-      setLoading(false)
+      setLoading(false);
     } catch (err) {
-            setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -65,7 +67,6 @@ const Teachers = () => {
     fetchTeachers();
   }, []);
 
-  // ➕ Qo'shish
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -75,31 +76,29 @@ const Teachers = () => {
       setShowModal(false);
       setAddForm({
         first_name: "",
+        username: "",
         last_name: "",
         password: "",
         role: 2,
         gender: true,
       });
       fetchTeachers();
-        setSubmitting(false);
+      setSubmitting(false);
     } catch {
-          setSubmitting(false);
+      setSubmitting(false);
       toast.error("Ustozni qo'shishda xatolik!");
     }
   };
 
-  // ✏️ Yangilash
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTeacher) return;
 
     try {
-        setSubmitting(true);
-
-      // ✅ editForm dan ma'lumotlarni yuborish
+      setSubmitting(true);
       const updateData = {
         id: editForm.id,
-        username:editForm.username,
+        username: editForm.username,
         first_name: editForm.first_name,
         last_name: editForm.last_name,
         role: 2,
@@ -108,23 +107,17 @@ const Teachers = () => {
 
       await updateUser(updateData);
       toast.success("Ustoz ma'lumotlari yangilandi!");
-      
-      // ✅ Modallarni yopish
       setShowEditModal(false);
       setSelectedTeacher(null);
-      
-      // ✅ Listni yangilash
       fetchTeachers();
-          setSubmitting(false);
-
+      setSubmitting(false);
     } catch (error) {
-          setSubmitting(false);
+      setSubmitting(false);
       console.error("Update xatosi:", error);
       toast.error("Yangilashda xatolik!");
     }
   };
 
-  // 🗑️ O'chirish
   const handleDelete = async () => {
     if (!selectedTeacher) return;
     try {
@@ -134,52 +127,43 @@ const Teachers = () => {
       setShowDeleteModal(false);
       setSelectedTeacher(null);
       fetchTeachers();
-          setSubmitting(false);
+      setSubmitting(false);
     } catch {
-          setSubmitting(false);
+      setSubmitting(false);
       toast.error("O'chirishda xatolik!");
     }
   };
 
-  // 🔐 Parolni tiklash
-    const handleResetPassword = async () => {
-      if (!selectedUser) return;
-      
-      if (!resetPassword.trim()) {
-        toast.error("Yangi parolni kiriting!");
-        return;
-      }
+  const handleResetPassword = async () => {
+    if (!selectedUser) return;
 
-      try {
+    if (!resetPassword.trim()) {
+      toast.error("Yangi parolni kiriting!");
+      return;
+    }
+
+    try {
       setSubmitting(true);
+      await updatePassword(selectedUser.id, resetPassword);
+      toast.success("Parol muvaffaqiyatli tiklandi!");
+      setResetModal(false);
+      setSelectedUser(null);
+      setResetPassword("");
+      setSubmitting(false);
+    } catch (error) {
+      setSubmitting(false);
+      console.error("Parolni tiklash xatosi:", error);
+      toast.error("Parolni tiklashda xatolik!");
+    }
+  };
 
-        await updatePassword(selectedUser.id,resetPassword);
-        
-        toast.success("Parol muvaffaqiyatli tiklandi!");
-        setResetModal(false);
-        setSelectedUser(null);
-        setResetPassword("");
-        setSubmitting(false)
-      } catch (error) {
-            setSubmitting(false);
-        console.error("Parolni tiklash xatosi:", error);
-        toast.error("Parolni tiklashda xatolik!");
-      }
-    };
-  
-
-    // 🔍 Search va filter state'lari
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterClass, ] = useState<number>(0);
-
-  // 🔍 Filter va search
   const filteredStudents = teachers.filter((student) => {
-    const matchesSearch = 
+    const matchesSearch =
       student.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.last_name.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesClass = filterClass === 0 || student.classe === filterClass;
-    
+
     return matchesSearch && matchesClass;
   });
 
@@ -188,28 +172,29 @@ const Teachers = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Bu yerda fetchBooks(page) yoki filter logic bo‘ladi
   };
-    const startIndex = (currentPage - 1) * perPage;
+
+  const startIndex = (currentPage - 1) * perPage;
 
   return (
-    <div className="p-6 bg-linear-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-2xl">
+    <div className="p-3 sm:p-4 md:p-6 bg-linear-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-2xl">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-yellow-400 tracking-wide">
-          Ustozlar ro'yxati  <span className="">: {teachers.length}</span>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-yellow-400 tracking-wide">
+          Ustozlar ro'yxati: <span className="text-lg sm:text-xl md:text-2xl">{teachers.length}</span>
         </h1>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold px-4 py-2 rounded-lg shadow-md transition"
+          className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold px-3 sm:px-4 py-2 rounded-lg shadow-md transition text-sm sm:text-base w-full sm:w-auto justify-center"
         >
           <FaPlus /> Ustoz qo'shish
         </motion.button>
       </div>
-      {/* 🔍 Search va Filter */}
-      <div className="mb-6 flex gap-4 items-center bg-[#212121]/90 p-4 rounded-xl border border-gray-700">
+
+      {/* Search va Filter */}
+      <div className="mb-6 flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center bg-[#212121]/90 p-3 sm:p-4 rounded-xl border border-gray-700">
         <div className="flex-1">
           <input
             type="text"
@@ -219,30 +204,25 @@ const Teachers = () => {
               setSearchTerm(e.target.value);
               setCurrentPage(1);
             }}
-            className="w-full border border-gray-600 bg-[#2a2a2a] p-3 rounded-lg focus:outline-none focus:border-yellow-400 text-gray-100 placeholder-gray-500"
+            className="w-full border border-gray-600 bg-[#2a2a2a] p-2 sm:p-3 rounded-lg focus:outline-none focus:border-yellow-400 text-gray-100 placeholder-gray-500 text-sm sm:text-base"
           />
         </div>
-        
-    
 
-
-        {/* Clear filters button */}
-        {(searchTerm) && (
+        {searchTerm && (
           <button
             onClick={() => {
               setSearchTerm("");
               setCurrentPage(1);
             }}
-            className="px-4 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition border border-red-500/30 whitespace-nowrap"
+            className="px-3 sm:px-4 py-2 sm:py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition border border-red-500/30 whitespace-nowrap text-sm sm:text-base"
           >
             Tozalash
           </button>
         )}
       </div>
 
-      
-           {/* Table */}
-      <div className="overflow-x-auto rounded-xl shadow-lg bg-[#212121]/90 backdrop-blur-md border border-gray-700">
+      {/* Table - Desktop */}
+      <div className="hidden md:block overflow-x-auto rounded-xl shadow-lg bg-[#212121]/90 backdrop-blur-md border border-gray-700">
         <table className="w-full text-left text-sm">
           <thead className="bg-[#2a2a2a] text-yellow-400 uppercase text-xs font-semibold">
             <tr>
@@ -255,116 +235,210 @@ const Teachers = () => {
             </tr>
           </thead>
           <tbody>
-            {!loading ?  paginated.map((t, i) => (
-              <motion.tr
-                key={t.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03 }}
-                className="border-b border-gray-700 hover:bg-yellow-400/10 transition"
-              >
-                <td className="p-3 text-gray-300">{startIndex + i + 1}</td>
-                <td className="p-3 text-gray-300">{t.username}</td>
-                <td className="p-3 text-gray-100">{t.first_name}</td>
-                <td className="p-3 text-gray-100">{t.last_name}</td>
-                <td className="p-3 text-gray-400">{t.gender ? "Erkak" : "Ayol"}</td>
-                <td className="p-3 flex justify-center gap-4">
-                  <button
-                    onClick={() => {
-                      setSelectedTeacher(t);
-                      // ✅ Edit formani to'ldirish
-                      setEditForm({
-                        id: t.id,
-                        username:t.username,
-                        first_name: t.first_name,
-                        last_name: t.last_name,
-                        role: 2,
-                        gender: t.gender,
-                      });
-                      setShowEditModal(true);
-                    }}
-                    className="text-yellow-400 hover:text-yellow-300 transition"
-                  >
-                    <FaEdit />
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSelectedTeacher(t);
-                      setShowDeleteModal(true);
-                    }}
-                    className="text-red-500 hover:text-red-400 transition"
-                  >
-                    <FaTrash />
-                  </button>
-                  <button
-                    className="bg-yellow-400 px-4 py-2 rounded-lg text-black font-bold text-md"
-                    onClick={()=>{
-                      setSelectedUser(t);
-                      setResetModal(true);
-
-                    }}
-                  >
-                    Parolni tiklash
-                  </button>
+            {!loading ? (
+              paginated.map((t, i) => (
+                <motion.tr
+                  key={t.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.03 }}
+                  className="border-b border-gray-700 hover:bg-yellow-400/10 transition"
+                >
+                  <td className="p-3 text-gray-300">{startIndex + i + 1}</td>
+                  <td className="p-3 text-gray-300">{t.username}</td>
+                  <td className="p-3 text-gray-100">{t.first_name}</td>
+                  <td className="p-3 text-gray-100">{t.last_name}</td>
+                  <td className="p-3 text-gray-400">{t.gender ? "Erkak" : "Ayol"}</td>
+                  <td className="p-3">
+                    <div className="flex justify-center gap-3 flex-wrap">
+                      <button
+                        onClick={() => {
+                          setSelectedTeacher(t);
+                          setEditForm({
+                            id: t.id,
+                            username: t.username,
+                            first_name: t.first_name,
+                            last_name: t.last_name,
+                            role: 2,
+                            gender: t.gender,
+                          });
+                          setShowEditModal(true);
+                        }}
+                        className="text-yellow-400 hover:text-yellow-300 transition text-lg"
+                        title="Tahrirlash"
+                      >
+                        <FaEdit />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedTeacher(t);
+                          setShowDeleteModal(true);
+                        }}
+                        className="text-red-500 hover:text-red-400 transition text-lg"
+                        title="O'chirish"
+                      >
+                        <FaTrash />
+                      </button>
+                      <button
+                        className="bg-yellow-400 hover:bg-yellow-300 px-3 py-1.5 rounded-lg text-black font-bold text-xs transition"
+                        onClick={() => {
+                          setSelectedUser(t);
+                          setResetModal(true);
+                        }}
+                        title="Parolni tiklash"
+                      >
+                        <FaKey className="inline mr-1" />
+                        Parol
+                      </button>
+                    </div>
+                  </td>
+                </motion.tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6}>
+                  <CenteredProgressLoader />
                 </td>
-              </motion.tr>
-            )) : <tr>
-              <th colSpan={6}>
-                <CenteredProgressLoader/>
-                </th>
-              </tr>}
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
+      {/* Cards - Mobile/Tablet */}
+      <div className="md:hidden space-y-3">
+        {!loading ? (
+          paginated.length > 0 ? (
+            paginated.map((t, i) => (
+              <motion.div
+                key={t.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.03 }}
+                className="bg-[#212121]/90 backdrop-blur-md border border-gray-700 rounded-xl p-4 shadow-lg"
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex-1">
+                    <div className="text-yellow-400 font-semibold text-sm mb-1">
+                      #{startIndex + i + 1}
+                    </div>
+                    <h3 className="text-base sm:text-lg font-bold text-gray-100">
+                      {t.first_name} {t.last_name}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-gray-400 mt-1">@{t.username}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setSelectedTeacher(t);
+                        setEditForm({
+                          id: t.id,
+                          username: t.username,
+                          first_name: t.first_name,
+                          last_name: t.last_name,
+                          role: 2,
+                          gender: t.gender,
+                        });
+                        setShowEditModal(true);
+                      }}
+                      className="text-yellow-400 hover:text-yellow-300 transition p-2"
+                      title="Tahrirlash"
+                    >
+                      <FaEdit className="text-lg" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedTeacher(t);
+                        setShowDeleteModal(true);
+                      }}
+                      className="text-red-500 hover:text-red-400 transition p-2"
+                      title="O'chirish"
+                    >
+                      <FaTrash className="text-lg" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-700 pt-3 mt-3">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs sm:text-sm text-gray-400">Jinsi:</span>
+                    <span className="text-xs sm:text-sm text-gray-200 font-medium">
+                      {t.gender ? "Erkak" : "Ayol"}
+                    </span>
+                  </div>
+
+                  <button
+                    className="w-full bg-yellow-400 hover:bg-yellow-300 py-2 rounded-lg text-black font-bold text-sm transition flex items-center justify-center gap-2"
+                    onClick={() => {
+                      setSelectedUser(t);
+                      setResetModal(true);
+                    }}
+                  >
+                    <FaKey />
+                    Parolni tiklash
+                  </button>
+                </div>
+              </motion.div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-400">
+              <p>Hech qanday ustoz topilmadi</p>
+            </div>
+          )
+        ) : (
+          <CenteredProgressLoader />
+        )}
+      </div>
+
       {/* Pagination */}
       {totalPages > 1 && (
-  <div className="mt-6">
-    <Pagination 
-      totalPages={totalPages} 
-      currentPage={currentPage} 
-      onPageChange={handlePageChange} 
-    />
-  </div>
-)}
+        <div className="mt-6">
+          <Pagination totalPages={totalPages} currentPage={currentPage} onPageChange={handlePageChange} />
+        </div>
+      )}
 
-       {/*  Parolni reset qilish  */}
-            <AnimatePresence>
-              {resetModal && (
-                <ModalWrapper onClose={()=> setResetModal(false)} title="O'qituvchi parolini tiklash">
-                    <div className="space-y-3">
-                      <p className="text-lg">F.I.O: {selectedUser?.first_name} {selectedUser?.last_name}</p>
-                      <p>Login:  {selectedUser?.username}</p>
-                      <input 
-                      type="text"
-                      placeholder="Yangi parol"
-                      value={resetPassword}
-                      onChange={(e) => setResetPassword(e.target.value )}
-                      className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
-                      required
-                      />
-                    </div>
-                    <div className="flex justify-end gap-3 mt-5">
-                      <button
-                        type="button"
-                        onClick={() => setResetModal(false)}
-                        className="px-4 py-2 rounded bg-[#2a2a2a] hover:bg-[#333] border border-gray-600 transition"
-                      >
-                        Bekor qilish
-                      </button>
-                      <button
-                        disabled={submitting}
-                        type="button"
-                        onClick={handleResetPassword}
-                        className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-400 text-black font-semibold shadow-md"
-                      >
-                        {submitting ? "Yuklanmoqda..." : "Tiklash"}
-                      </button>
-                    </div>
-                </ModalWrapper>
-              )}
-            </AnimatePresence>
-
+      {/* Parolni reset qilish Modal */}
+      <AnimatePresence>
+        {resetModal && (
+          <ModalWrapper onClose={() => setResetModal(false)} title="Parolni tiklash">
+            <div className="space-y-3">
+              <div className="bg-[#2a2a2a]/50 p-3 rounded-lg border border-gray-700">
+                <p className="text-sm sm:text-base text-gray-300 mb-1">
+                  <span className="text-yellow-400 font-semibold">
+                    {selectedUser?.first_name} {selectedUser?.last_name}
+                  </span>
+                </p>
+                <p className="text-xs sm:text-sm text-gray-400">Login: {selectedUser?.username}</p>
+              </div>
+              <input
+                type="text"
+                placeholder="Yangi parol"
+                value={resetPassword}
+                onChange={(e) => setResetPassword(e.target.value)}
+                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 sm:p-3 rounded focus:outline-none focus:border-yellow-400 text-sm sm:text-base"
+                required
+              />
+            </div>
+            <div className="flex flex-col sm:flex-row justify-end gap-3 mt-5">
+              <button
+                type="button"
+                onClick={() => setResetModal(false)}
+                className="px-4 py-2 rounded bg-[#2a2a2a] hover:bg-[#333] border border-gray-600 transition text-sm sm:text-base order-2 sm:order-1"
+              >
+                Bekor qilish
+              </button>
+              <button
+                disabled={submitting}
+                type="button"
+                onClick={handleResetPassword}
+                className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-400 text-black font-semibold shadow-md text-sm sm:text-base order-1 sm:order-2"
+              >
+                {submitting ? "Yuklanmoqda..." : "Tiklash"}
+              </button>
+            </div>
+          </ModalWrapper>
+        )}
+      </AnimatePresence>
 
       {/* Qo'shish Modal */}
       <AnimatePresence>
@@ -376,7 +450,7 @@ const Teachers = () => {
                 placeholder="Ism"
                 value={addForm.first_name}
                 onChange={(e) => setAddForm({ ...addForm, first_name: e.target.value })}
-                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
+                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 sm:p-3 rounded focus:outline-none focus:border-yellow-400 text-sm sm:text-base"
                 required
               />
               <input
@@ -384,7 +458,7 @@ const Teachers = () => {
                 placeholder="Familiya"
                 value={addForm.last_name}
                 onChange={(e) => setAddForm({ ...addForm, last_name: e.target.value })}
-                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
+                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 sm:p-3 rounded focus:outline-none focus:border-yellow-400 text-sm sm:text-base"
                 required
               />
               <input
@@ -392,21 +466,21 @@ const Teachers = () => {
                 placeholder="Parol"
                 value={addForm.password}
                 onChange={(e) => setAddForm({ ...addForm, password: e.target.value })}
-                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
+                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 sm:p-3 rounded focus:outline-none focus:border-yellow-400 text-sm sm:text-base"
                 required
               />
-              <div className="flex gap-3 items-center">
-                <label className="text-gray-300 font-medium">Jinsi:</label>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-start sm:items-center">
+                <label className="text-gray-300 font-medium text-sm sm:text-base">Jinsi:</label>
                 <select
                   value={addForm.gender ? "true" : "false"}
                   onChange={(e) => setAddForm({ ...addForm, gender: e.target.value === "true" })}
-                  className="border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:border-yellow-400"
+                  className="w-full sm:w-auto border border-gray-600 bg-[#2a2a2a] p-2 sm:p-2.5 rounded focus:border-yellow-400 text-sm sm:text-base"
                 >
                   <option value="true">Erkak</option>
                   <option value="false">Ayol</option>
                 </select>
               </div>
-              <ModalActions onClose={() => setShowModal(false)} submitting={submitting}/>
+              <ModalActions onClose={() => setShowModal(false)} submitting={submitting} />
             </form>
           </ModalWrapper>
         )}
@@ -422,7 +496,7 @@ const Teachers = () => {
                 placeholder="Username"
                 value={editForm.username}
                 onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
-                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
+                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 sm:p-3 rounded focus:outline-none focus:border-yellow-400 text-sm sm:text-base"
                 required
               />
               <input
@@ -430,7 +504,7 @@ const Teachers = () => {
                 placeholder="Ism"
                 value={editForm.first_name}
                 onChange={(e) => setEditForm({ ...editForm, first_name: e.target.value })}
-                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
+                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 sm:p-3 rounded focus:outline-none focus:border-yellow-400 text-sm sm:text-base"
                 required
               />
               <input
@@ -438,21 +512,21 @@ const Teachers = () => {
                 placeholder="Familiya"
                 value={editForm.last_name}
                 onChange={(e) => setEditForm({ ...editForm, last_name: e.target.value })}
-                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
+                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 sm:p-3 rounded focus:outline-none focus:border-yellow-400 text-sm sm:text-base"
                 required
               />
-              <div className="flex gap-3 items-center">
-                <label className="text-gray-300 font-medium">Jinsi:</label>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-start sm:items-center">
+                <label className="text-gray-300 font-medium text-sm sm:text-base">Jinsi:</label>
                 <select
                   value={editForm.gender ? "true" : "false"}
                   onChange={(e) => setEditForm({ ...editForm, gender: e.target.value === "true" })}
-                  className="border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:border-yellow-400"
+                  className="w-full sm:w-auto border border-gray-600 bg-[#2a2a2a] p-2 sm:p-2.5 rounded focus:border-yellow-400 text-sm sm:text-base"
                 >
                   <option value="true">Erkak</option>
                   <option value="false">Ayol</option>
                 </select>
               </div>
-              <ModalActions onClose={() => setShowEditModal(false)} submitting={submitting}/>
+              <ModalActions onClose={() => setShowEditModal(false)} submitting={submitting} />
             </form>
           </ModalWrapper>
         )}
@@ -462,24 +536,28 @@ const Teachers = () => {
       <AnimatePresence>
         {showDeleteModal && (
           <ModalWrapper onClose={() => setShowDeleteModal(false)} title="⚠️ Ustozni o'chirish">
-            <p className="text-gray-300 mb-6">
-              <span className="text-yellow-400 font-semibold">
-                {selectedTeacher?.first_name} {selectedTeacher?.last_name}
-              </span>{" "}
-              ni o'chirmoqchimisiz?
-            </p>
-            <div className="flex justify-end gap-3">
+            <div className="bg-[#2a2a2a]/50 p-4 rounded-lg border border-gray-700 mb-6">
+              <p className="text-gray-300 text-sm sm:text-base">
+                <span className="text-yellow-400 font-semibold">
+                  {selectedTeacher?.first_name} {selectedTeacher?.last_name}
+                </span>{" "}
+                ni o'chirmoqchimisiz?
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row justify-end gap-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 rounded bg-[#2a2a2a] hover:bg-[#333] border border-gray-600 transition"
+                disabled={submitting}
+                className="px-4 py-2 rounded bg-[#2a2a2a] hover:bg-[#333] border border-gray-600 transition text-sm sm:text-base order-2 sm:order-1"
               >
                 Bekor qilish
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 rounded bg-red-500 hover:bg-red-400 text-white font-semibold"
+                disabled={submitting}
+                className="px-4 py-2 rounded bg-red-500 hover:bg-red-400 text-white font-semibold text-sm sm:text-base order-1 sm:order-2"
               >
-                O'chirish
+                {submitting ? "Yuklanmoqda..." : "O'chirish"}
               </button>
             </div>
           </ModalWrapper>
@@ -489,10 +567,11 @@ const Teachers = () => {
   );
 };
 
-/* 🔧 Qisqa komponentlar */
+/* Modal Components */
 const ModalWrapper = ({
   children,
   title,
+  onClose,
 }: {
   children: React.ReactNode;
   onClose: () => void;
@@ -502,31 +581,31 @@ const ModalWrapper = ({
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
-    className="fixed inset-0 flex items-center justify-center bg-black/70 z-50 backdrop-blur-sm"
+    onClick={onClose}
+    className="fixed inset-0 flex items-center justify-center bg-black/70 z-50 backdrop-blur-sm p-4"
   >
     <motion.div
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       exit={{ scale: 0.8, opacity: 0 }}
       transition={{ type: "spring", stiffness: 200, damping: 15 }}
-      className="bg-[#212121]/95 text-gray-100 rounded-xl shadow-2xl w-full max-w-md p-6 border border-yellow-500/30"
+      onClick={(e) => e.stopPropagation()}
+      className="bg-[#212121]/95 text-gray-100 rounded-xl shadow-2xl w-full max-w-md p-4 sm:p-6 border border-yellow-500/30 max-h-[90vh] overflow-y-auto"
     >
-      <h2 className="text-xl font-semibold mb-4 text-yellow-400">{title}</h2>
+      <h2 className="text-lg sm:text-xl font-semibold mb-4 text-yellow-400">{title}</h2>
       {children}
     </motion.div>
   </motion.div>
 );
 
 const ModalActions = ({ onClose, submitting }: { onClose: () => void; submitting: boolean }) => (
-  <div className="flex justify-end gap-3 mt-5">
+  <div className="flex flex-col sm:flex-row justify-end gap-3 mt-5">
     <button
       type="button"
       onClick={onClose}
       disabled={submitting}
-      className={`px-4 py-2 rounded border border-gray-600 transition ${
-        submitting 
-          ? 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed' 
-          : 'bg-[#2a2a2a] hover:bg-[#333] text-gray-100'
+      className={`px-4 py-2 rounded border border-gray-600 transition text-sm sm:text-base order-2 sm:order-1 ${
+        submitting ? "bg-[#1a1a1a] text-gray-600 cursor-not-allowed" : "bg-[#2a2a2a] hover:bg-[#333] text-gray-100"
       }`}
     >
       Bekor qilish
@@ -534,10 +613,8 @@ const ModalActions = ({ onClose, submitting }: { onClose: () => void; submitting
     <button
       disabled={submitting}
       type="submit"
-      className={`px-4 py-2 rounded font-semibold shadow-md transition ${
-        submitting
-          ? 'bg-[#3a3a3a] text-gray-600 cursor-not-allowed'
-          : 'bg-yellow-500 hover:bg-yellow-400 text-black'
+      className={`px-4 py-2 rounded font-semibold shadow-md transition text-sm sm:text-base order-1 sm:order-2 ${
+        submitting ? "bg-[#3a3a3a] text-gray-600 cursor-not-allowed" : "bg-yellow-500 hover:bg-yellow-400 text-black"
       }`}
     >
       {submitting ? "Yuklanmoqda..." : "Saqlash"}

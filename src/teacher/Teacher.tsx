@@ -1,9 +1,8 @@
-
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { FaPlus, FaEllipsisV, FaTimes } from "react-icons/fa";
-import { createClass, createGrade, getMyStudents, getOneUsers } from "../hooks/apis";
+import { createClass, createGrade, getMyStudents, getOneUsers, updateUser } from "../hooks/apis";
 import ImportButton from "../components/Import";
 import { Check } from "lucide-react";
 import { CenteredProgressLoader } from "../components/loading";
@@ -17,6 +16,7 @@ interface Student {
   classe: Class;
   student_id: number;
   classe_name: string;
+  ball?: number;
 }
 
 interface Class {
@@ -44,6 +44,12 @@ const Teacher = () => {
     password: "",
     gender: true,
   });
+
+  const [showSubtractModal, setShowSubtractModal] = useState(false);
+  const [subtractAmount, setSubtractAmount] = useState<string>("");
+  const [gradeNote, setGradeNote] = useState<string>("");
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [modalLoading, setModalLoading] = useState(false);
 
   const currentTeacherId = Number(localStorage.getItem("id"));
 
@@ -94,7 +100,6 @@ const Teacher = () => {
   const fetchStudents = async (page: number = 1) => {
     try {
       const res = await getMyStudents(page);
-      
       // DRF pagination javobini parse qilish
       if (res.data.results) {
         setStudents(res.data.results);
@@ -293,16 +298,17 @@ const Teacher = () => {
         <table className="w-full text-left text-sm min-w-[640px] max-md:min-w-[400px]">
           <thead className="bg-[#2a2a2a] text-yellow-400 uppercase text-xs font-semibold">
             <tr>
-              <th className="p-3 max-md:p-2 max-md:text-[10px] w-[10%] max-md:w-[20px]">T/r</th>
-              <th className="p-3 max-md:p-2 max-md:text-[10px] w-[20%] max-md:w-[80px]">Ism</th>
-              <th className="p-3 max-md:p-2 max-md:text-[10px] w-[30%] max-md:w-[100px]">Familiya</th>
-              <th className="p-3 max-md:p-2 max-md:text-[10px] w-[40%] max-md:w-auto text-start">Baho</th>
+              <th className="p-3 max-md:p-2 max-md:text-[10px] w-[10%] max-md:w-[120px]">T/r</th>
+              <th className="p-3 max-md:p-2 max-md:text-[10px] w-[25%] max-md:w-[120px]">Ism</th>
+              <th className="p-3 max-md:p-2 max-md:text-[10px] w-[25%] max-md:w-[120px]">Familiya</th>
+              <th className="p-3 max-md:p-2 max-md:text-[10px] w-[15%] max-md:w-auto">Ball</th>
+              <th className="p-3 max-md:p-2 max-md:text-[10px] w-[25%] max-md:w-auto text-start">Amallar</th>
             </tr>
           </thead>
           <tbody>
             {paginated.length === 0 ? (
               <tr>
-                <td colSpan={4} className="p-8 max-md:p-6 text-center text-gray-400 max-md:text-sm">
+                <td colSpan={5} className="p-8 max-md:p-6 text-center text-gray-400 max-md:text-sm">
                   {loading ? <CenteredProgressLoader/> : "Ma'lumotlar topilmadi"}
                 </td>
               </tr>
@@ -322,42 +328,60 @@ const Teacher = () => {
                   <td className="p-3 max-md:p-2 text-gray-100 font-medium max-md:text-[11px] truncate" title={student.last_name}>
                     {student.last_name}
                   </td>
-                  <td className="-ml-10  p-3 max-md:p-2">
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        handleGiveGrade(student.student_id);
-                      }}
-                      className="flex items-center gap-2 max-md:gap-1"
-                    >
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        placeholder="1-10"
-                        value={gradeInputs[student.student_id] || ""}
-                        onChange={(e) => handleGradeInputChange(student.student_id, e.target.value)}
-                        disabled={loading[student.student_id]}
-                        className="w-16 max-md:w-12 bg-[#2a2a2a] border border-gray-600 rounded-lg p-2 max-md:p-1 text-center text-sm max-md:text-[11px] focus:outline-none focus:border-yellow-400 text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                        maxLength={2}
-                      />
-                      <button
-                        type="submit"
-                        disabled={loading[student.student_id] || !gradeInputs[student.student_id]}
-                        className="px-3 max-md:px-2 py-2 max-md:py-1 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold rounded-lg text-xs max-md:text-[10px] transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 max-md:gap-1 whitespace-nowrap"
+                  <td className="p-3 max-md:p-2 text-yellow-400 font-semibold text-start">
+                    {student.ball ?? 0}
+                  </td>
+                  <td className="p-3 max-md:p-2">
+                    <div className="flex items-center gap-2 flex-wrap max-md:gap-1">
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleGiveGrade(student.student_id);
+                        }}
+                        className="flex items-center gap-2 max-md:gap-1"
                       >
-                        {loading[student.student_id] ? (
-                          <>
-                            <div className="w-3 h-3 max-md:w-2.5 max-md:h-2.5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-                            <span className="max-md:hidden">Yuklanmoqda</span>
-                          </>
-                        ) : (
-                          <>
-                            <span className="hidden md:inline">Baholash</span>
-                            <Check className="inline md:hidden w-3 h-3 text-black" />
-                          </>
-                        )}
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="1-10"
+                          value={gradeInputs[student.student_id] || ""}
+                          onChange={(e) => handleGradeInputChange(student.student_id, e.target.value)}
+                          disabled={loading[student.student_id]}
+                          className="w-14 max-md:w-12 bg-[#2a2a2a] border border-gray-600 rounded-lg p-2 max-md:p-1 text-center text-sm max-md:text-[11px] focus:outline-none focus:border-yellow-400 text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                          maxLength={2}
+                        />
+                        <button
+                          type="submit"
+                          disabled={loading[student.student_id] || !gradeInputs[student.student_id]}
+                          className="px-3 max-md:px-2 py-2 max-md:py-1 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold rounded-lg text-xs max-md:text-[10px] transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 max-md:gap-1 whitespace-nowrap"
+                        >
+                          {loading[student.student_id] ? (
+                            <>
+                              <div className="w-3 h-3 max-md:w-2.5 max-md:h-2.5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                              <span className="max-md:hidden">Yuklanmoqda</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="hidden md:inline">Baholash</span>
+                              <Check className="inline md:hidden w-3 h-3 text-black" />
+                            </>
+                          )}
+                        </button>
+
+                      </form>
+
+                      <button
+                        onClick={() => {
+                          setSelectedStudent(student);
+                          setSubtractAmount("");
+                          setGradeNote("");
+                          setShowSubtractModal(true);
+                        }}
+                        className="px-2 py-1 bg-red-500 hover:bg-red-400 text-white rounded-md text-xs max-md:text-[10px] transition"
+                      >
+                        - Ball
                       </button>
-                    </form>
+                    </div>
                   </td>
                 </motion.tr>
               ))
@@ -382,6 +406,72 @@ const Teacher = () => {
               {i + 1}
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Ballni ayirish modali */}
+      {showSubtractModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
+          <div className="bg-[#1e1e1e] p-6 max-md:p-5 rounded-2xl max-md:rounded-xl border border-gray-700 w-[90%] max-w-md">
+            <h3 className="text-xl max-md:text-lg font-bold text-yellow-400 mb-4 max-md:mb-3">Ballni ayirish</h3>
+            <p className="text-sm">F.I.O: {selectedStudent?.first_name} {selectedStudent?.last_name}</p>
+            <p className="text-xs text-gray-400 mb-3">Hozirgi ball: {selectedStudent?.ball ?? 0}</p>
+            <input
+              type="number"
+              placeholder="Necha ball ayirish (raqam)"
+              value={subtractAmount}
+              onChange={(e) => setSubtractAmount(e.target.value)}
+              disabled={modalLoading}
+              className="w-full bg-[#2a2a2a] border border-gray-600 rounded-lg p-3 max-md:p-2.5 max-md:text-sm mb-3 text-gray-100 focus:outline-none focus:border-yellow-400 disabled:opacity-50"
+            />
+            <input
+              type="text"
+              placeholder="Baho (izoh) — ixtiyoriy"
+              value={gradeNote}
+              onChange={(e) => setGradeNote(e.target.value)}
+              disabled={modalLoading}
+              className="w-full bg-[#2a2a2a] border border-gray-600 rounded-lg p-3 max-md:p-2.5 max-md:text-sm mb-4 text-gray-100 focus:outline-none focus:border-yellow-400 disabled:opacity-50"
+            />
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowSubtractModal(false)}
+                disabled={modalLoading}
+                className="px-4 py-2 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600"
+              >
+                Bekor qilish
+              </button>
+              <button
+                onClick={async () => {
+                  if (!selectedStudent) return;
+                  const amt = Number(subtractAmount);
+                  if (isNaN(amt) || amt <= 0) {
+                    toast.error("Iltimos musbat son kiriting!");
+                    return;
+                  }
+                  const newBall = Math.max(0, (selectedStudent.ball || 0) - amt);
+                  try {
+                    setModalLoading(true);
+                    await updateUser({ id: selectedStudent.student_id, ball: newBall });
+                    toast.success("Ball muvaffaqiyatli yangilandi!");
+                    setShowSubtractModal(false);
+                    setSelectedStudent(null);
+                    setSubtractAmount("");
+                    setGradeNote("");
+                    fetchStudents();
+                  } catch (err) {
+                    console.error(err);
+                    toast.error("Ballni yangilashda xatolik!");
+                  } finally {
+                    setModalLoading(false);
+                  }
+                }}
+                disabled={modalLoading}
+                className="px-4 py-2 bg-yellow-500 text-black rounded-lg hover:bg-yellow-400"
+              >
+                {modalLoading ? "Jarayonda..." : "Ayirish"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

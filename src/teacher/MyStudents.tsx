@@ -41,6 +41,7 @@ const MyStudents = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [loading,setLoading] = useState(false)
   const [modalLoading, setModalLoading] = useState(false);
+  
   const [selectedClassName, setSelectedClassName] = useState<string | null>(null);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
 
@@ -589,6 +590,7 @@ const MyStudents = () => {
                       >
                         <FaKey size={12} /> Parolni tiklash
                       </button>
+                      
                     </div>
                   </td>
                 </tr>
@@ -689,6 +691,7 @@ const MyStudents = () => {
                     <FaKey size={12} />
                     <span>Parol</span>
                   </button>
+                  
                 </div>
               </div>
             </div>
@@ -804,6 +807,7 @@ const MyStudents = () => {
           </ModalWrapper>
         )}
       </AnimatePresence>
+      
 
       {/* Qo'shish modali */}
       <AnimatePresence>

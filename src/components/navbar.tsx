@@ -7,6 +7,7 @@ import {
   FaChalkboardTeacher,
   FaShoppingBag,
   FaBookOpen,
+  FaHistory,
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -36,6 +37,7 @@ const Navbar: React.FC<Props> = ({ onNavigate }) => {
       { path: "/teachers", label: "Ustozlar", icon: <FaChalkboardTeacher size={18} /> },
       { path: "/shop", label: "Shop-255", icon: <FaShoppingBag size={18} /> },
       { path: "/orders", label: "Buyurtmalar", icon: <FaBookOpen size={18} /> },
+      { path: "/history", label: "Arxiv", icon: <FaHistory size={18} /> },
     ];
 
     if (role === "2") {

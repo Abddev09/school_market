@@ -41,6 +41,8 @@ const Classes = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const perPage = 20;
+  const [totalCount, setTotalCount] = useState(0);
+  const [serverPaginated, setServerPaginated] = useState(false);
 
   const normalizeName = (name: string) => {
   const num = name.match(/\d+/)?.[0] || '0';
@@ -53,13 +55,19 @@ const Classes = () => {
   return `${num}-${letter}`;
 };
 
-const fetchClasses = async () => {
+const fetchClasses = async (page: number = 1) => {
   try {
     setLoading(true);
 
-    const res = await getClasses();
-    const data = res.data;
-
+    const res = await getClasses(page);
+    // DRF pagination: results, count, next, previous
+    const hasResults = Boolean(res.data && res.data.results);
+    const data = hasResults ? res.data.results : res.data;
+    const count = hasResults ? (res.data.count ?? data.length) : (data.length ?? 0);
+    setTotalCount(count);
+    setCurrentPage(page);
+    setServerPaginated(hasResults);
+    console.log(res)
     const normalizedAndSorted = [...data]
       .map((item: any) => ({
         ...item,
@@ -99,7 +107,7 @@ const fetchClasses = async () => {
   };
 
   useEffect(() => {
-    fetchClasses();
+    fetchClasses(currentPage);
     fetchTeachers();
   }, []);
 
@@ -120,7 +128,7 @@ const fetchClasses = async () => {
         name: "",
         teacher: 0,
       });
-      fetchClasses();
+      fetchClasses(currentPage);
     } catch {
       toast.error("Sinfni qo'shishda xatolik!");
     } finally {
@@ -142,7 +150,7 @@ const fetchClasses = async () => {
       toast.success("Sinf ma'lumotlari yangilandi!");
       setShowEditModal(false);
       setSelectedClass(null);
-      fetchClasses();
+      fetchClasses(currentPage);
     } catch (error) {
       console.error("Update xatosi:", error);
       toast.error("Yangilashda xatolik!");
@@ -159,7 +167,7 @@ const fetchClasses = async () => {
       toast.success("Sinf o'chirildi!");
       setShowDeleteModal(false);
       setSelectedClass(null);
-      fetchClasses();
+      fetchClasses(currentPage);
     } catch {
       toast.error("O'chirishda xatolik!");
     } finally {
@@ -172,8 +180,10 @@ const fetchClasses = async () => {
     return teacher ? `${teacher.first_name} ${teacher.last_name}` : "Ustoz topilmadi";
   };
 
-  const totalPages = Math.ceil(classes.length / perPage);
-  const paginated = classes.slice((currentPage - 1) * perPage, currentPage * perPage);
+  const totalPages = Math.max(1, Math.ceil(totalCount / perPage));
+  const paginated = serverPaginated
+    ? classes // server already returned current page items
+    : classes.slice((currentPage - 1) * perPage, currentPage * perPage);
 
   return (
     <div className="p-6 bg-linear-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-2xl">
@@ -263,7 +273,7 @@ const fetchClasses = async () => {
           {Array.from({ length: totalPages }, (_, i) => (
             <button
               key={i}
-              onClick={() => setCurrentPage(i + 1)}
+              onClick={() => fetchClasses(i + 1)}
               className={`px-3 py-1 rounded-md text-sm font-medium transition ${
                 currentPage === i + 1
                   ? "bg-yellow-500 text-black"

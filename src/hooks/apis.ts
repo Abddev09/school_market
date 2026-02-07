@@ -19,9 +19,19 @@ export const getOneUsers = async (id:any) => {
 };
 
 export const createUser = async (data: any) => {
-  const res = await api.post("users/", data);
-  return res;
+  try {
+    const res = await api.post("users/", data);
+    return res.data;
+  } catch (error: any) {
+    console.log("STATUS:", error.response?.status);
+    console.log("ERROR DATA:", error.response?.data);
+    console.log("FULL ERROR:", error);
+
+    // xohlasang yuqoriga ham o‘tkazamiz
+    throw error.response?.data;
+  }
 };
+
 
 // ⚙️ PATCH — id data ichida ketadi
 export const updateUser = async (data: any) => {
@@ -36,9 +46,9 @@ export const deleteUser = async (data: any) => {
 };
 
 
-export const getClasses = async () => {
-  const res = await api.get(`classes/`);
-  return res
+export const getClasses = async (page: number = 1) => {
+  const res = await api.get(`classes/?page=${page}`);
+  return res;
 };
 
 export const createClass = async (data: any) => {
@@ -256,3 +266,16 @@ export const searchStudent = async (s:string,page:number) => {
   const res = await api.get(`search?s=${s}&page=${page}`);
   return res;
 }
+
+
+// 📊 GET — barcha arxiv yozuvlarini olish
+export const getHistory = async (page: number = 1) => {
+  const res = await api.get(`history/?page=${page}`);
+  return res;
+};
+
+// 🗑️ DELETE — arxiv yozuvini o'chirish
+export const deleteHistory = async (id: number) => {
+  const res = await api.delete(`history/${id}/`);
+  return res;
+};

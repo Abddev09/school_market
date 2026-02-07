@@ -11,6 +11,7 @@ import Students from "./admin/Students";
 import Teachers from "./admin/Teachers";
 import Shop from "./admin/Shop";
 import Orders from "./admin/Orders";
+import History from "./admin/History";
 import Teacher from "./teacher/Teacher";
 import MyStudents from "./teacher/MyStudents";
 import { Toaster } from "sonner";
@@ -47,6 +48,7 @@ const App = () => {
         { path: "/teachers", element: <Teachers /> },
         { path: "/shop", element: <Shop /> },
         { path: "/orders", element: <Orders /> },
+        { path: "/history", element: <History /> },
         { path: "*", element: <DashboardLayout isPublic>
       <NotFound />
     </DashboardLayout> },

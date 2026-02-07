@@ -5,6 +5,7 @@ import { FaArrowLeft, FaUser,FaSchool, FaGraduationCap, FaEdit, FaTrash, FaKey }
 import { getOneUsers, getMyStudents, getClassesByTeacher, updateUser, deleteUser, updatePassword, getClasses } from "../hooks/apis";
 import { toast } from "sonner";
 import { CenteredProgressLoader } from "../components/loading";
+import { cache } from "../utils/cache";
 
 interface User {
   id: number;
@@ -48,7 +49,7 @@ const UserProfile = () => {
   const [teacherClasses, setTeacherClasses] = useState<TeacherClass[]>([]);
   const [allClasses, setAllClasses] = useState<Class[]>([]);
 
-  const roleString = localStorage.getItem("role");
+  const roleString = cache.getRole();
   const currentUserRole = roleString ? Number(atob(roleString)) : 0;
 
   // Edit modal states

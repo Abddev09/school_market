@@ -1,5 +1,6 @@
 // src/api/api.ts
 import axios from "axios";
+import { cache } from "../utils/cache";
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 const SECRET_KEY = import.meta.env.VITE_API_SECRET_KEY;
@@ -15,7 +16,7 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = cache.getToken();
   if (token) {
     config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;

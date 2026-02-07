@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaPlus, FaEdit, FaTrash, FaEllipsisV, FaKey, FaFileExcel, FaSearch } from "react-icons/fa";
 import { createUser, deleteUser, updateUser, getClasses, updatePassword, getMyStudents, createClass } from "../hooks/apis";
+import { cache } from "../utils/cache";
 import { toast } from "sonner";
 import ImportButton from "../components/Import";
 import * as XLSX from 'xlsx';
@@ -68,7 +69,7 @@ const MyStudents = () => {
   const perPage = 40;
 
   const [searchTerm, setSearchTerm] = useState("");
-  const teacher_id = Number(localStorage.getItem("id"));
+  const teacher_id = cache.getIdAsNumber() || 0;
 
   const fetchStudents = async (page: number = 1) => {
     try {

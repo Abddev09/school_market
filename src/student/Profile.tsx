@@ -5,6 +5,7 @@ import { getStudentUsers } from "../hooks/apis";
 import { User, Trophy, Award } from "lucide-react";
 import humofront from "../assets/humocard.jpg"
 import humobehind from "../assets/behindhumo.jpg"
+import { cache } from "../utils/cache";
 interface Student {
   id: number;
   first_name: string;
@@ -36,7 +37,7 @@ const Profile = () => {
         const sorted = allStudents.sort((a, b) => b.ball - a.ball);
         setStudents(sorted);
 
-        const id = Number(localStorage.getItem("id"));
+        const id = cache.getIdAsNumber() || 0;
         const me = sorted.find((s) => s.id === id);
         if (me) setCurrentUser(me);
       } catch (err) {

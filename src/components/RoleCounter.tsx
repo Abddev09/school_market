@@ -1,20 +1,21 @@
 import { Navigate } from "react-router-dom";
+import { cache } from "../utils/cache";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRole?: string | string[]; // bitta yoki ko‘p rollar bo‘lishi mumkin
+  allowedRole?: string | string[]; // bitta yoki ko'p rollar bo'lishi mumkin
 }
 
 const ProtectedRoute = ({ children, allowedRole = ["1", "2", "3"] }: ProtectedRouteProps) => {
-  const token = localStorage.getItem("token");
-  const storedRole = localStorage.getItem("role");
+  const token = cache.getToken();
+  const storedRole = cache.getRole();
 
-  // 🔒 Agar foydalanuvchi login qilmagan bo‘lsa — login sahifasiga
+  // 🔒 Agar foydalanuvchi login qilmagan bo'lsa — login sahifasiga
   if (!token || !storedRole) {
     return <Navigate to="/login" replace />;
   }
 
-  // 🧩 localStorage dagi role ni decode qilamiz
+  // 🧩 cache dagi role ni decode qilamiz
   const decodedRole = atob(storedRole);
 
   // 🔄 allowedRole ni har doim massivga aylantiramiz

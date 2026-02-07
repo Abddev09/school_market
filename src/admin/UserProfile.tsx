@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaArrowLeft, FaUser, FaMailBulk, FaPhone, FaSchool, FaGraduationCap, FaEdit, FaTrash, FaKey } from "react-icons/fa";
+import { FaArrowLeft, FaUser,FaSchool, FaGraduationCap, FaEdit, FaTrash, FaKey } from "react-icons/fa";
 import { getOneUsers, getMyStudents, getClassesByTeacher, updateUser, deleteUser, updatePassword, getClasses } from "../hooks/apis";
 import { toast } from "sonner";
 import { CenteredProgressLoader } from "../components/loading";

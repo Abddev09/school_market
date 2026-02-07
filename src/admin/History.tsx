@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaEye, FaUserGraduate, FaUserTie, FaUserShield } from "react-icons/fa";
+import { FaEye } from "react-icons/fa";
 import { toast } from "sonner";
 import { getHistory, searchUserByUsername } from "../hooks/apis";
 import { CenteredProgressLoader } from "../components/loading";

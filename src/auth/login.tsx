@@ -6,6 +6,7 @@ import LightRays from "../components/bg"; // joylashuvni o'zingga moslashtir
 import HelmetPage from "../utils/Helmet";
 import Snowfall from 'react-snowfall';
 import { cache } from "../utils/cache";
+   import { useMemo } from "react";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -41,14 +42,24 @@ const Login = () => {
     setLoading(false);
   }
 };
-
+  const season = useMemo(() => {
+    const month = new Date().getMonth();
+  
+    if (month === 11 || month === 0 || month === 1) return "winter";
+    if (month >= 2 && month <= 4) return "spring";
+    if (month >= 5 && month <= 7) return "summer";
+    return "autumn";
+  }, []);
   return (
     <>
-     <Snowfall
-      snowflakeCount={250}
-      color="white"
-      style={{ position: 'fixed', width: '100vw', height: '100vh', zIndex:50 }}
-    />
+    
+     {season === "winter" ? (
+      <Snowfall
+        snowflakeCount={250}
+        color="white"
+        style={{ position: "fixed", width: "100vw", height: "100vh", zIndex: 50 }}
+      />
+    ) : null}
     <HelmetPage/>
     <div className="relative w-full h-screen overflow-hidden bg-[#0a0a0a] text-gray-100">
       {/* 🌌 LightRays background */}

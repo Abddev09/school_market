@@ -22,6 +22,7 @@ import Cart from "./student/Cart";
 import Profile from "./student/Profile";
 import Market from "./student/Market";
 import NotFound from "./components/404";
+   import { useMemo } from "react";
 
 const App = () => {
   const router = createBrowserRouter([
@@ -94,17 +95,27 @@ const App = () => {
     },
   ]);
 
-  return (
-    <>
-      <Toaster position="top-center"/>
-          <Snowfall
-            snowflakeCount={250}
-            color="white"
-            style={{ position: 'fixed', width: '100vw', height: '100vh', zIndex:50 }}
-          />
-      <RouterProvider router={router} />
-    </>
-  );
-};
+const season = useMemo(() => {
+  const month = new Date().getMonth();
 
-export default App;
+  if (month === 11 || month === 0 || month === 1) return "winter";
+  if (month >= 2 && month <= 4) return "spring";
+  if (month >= 5 && month <= 7) return "summer";
+  return "autumn";
+}, []);
+    return (
+      <>
+        <Toaster position="top-center"/>
+           {season === "winter" ? (
+  <Snowfall
+    snowflakeCount={250}
+    color="white"
+    style={{ position: "fixed", width: "100vw", height: "100vh", zIndex: 50 }}
+  />
+) : null}
+        <RouterProvider router={router} />
+      </>
+    );
+  };
+
+  export default App;

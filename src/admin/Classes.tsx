@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
-import { getClasses, createClass, updateClass, deleteClass, getTeacherAll } from "../hooks/apis";
+import { getClasses, createClass, updateClass, deleteClass, getTeacherAll, getStudentsByClass } from "../hooks/apis";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { CenteredProgressLoader } from "../components/loading";
@@ -19,6 +19,8 @@ interface Class {
   name: string;
   teacher: number;
   teacher_detail?: Teacher;
+  totalStudents?: number;
+  totalPoints?: number;
 }
 
 const Classes = () => {
@@ -91,7 +93,42 @@ const fetchClasses = async (page: number = 1) => {
         return aLet.localeCompare(bLet);
       });
 
-    setClasses(normalizedAndSorted);
+    // Har bir sinf uchun o'quvchilarni olib ballarini hisoblash
+    const classesWithStats = await Promise.all(
+      normalizedAndSorted.map(async (classItem: any) => {
+        try {
+          const studentsRes = await getStudentsByClass(1, classItem.id);
+          const students = studentsRes.data.results || studentsRes.data;
+          
+          if (Array.isArray(students)) {
+            const totalPoints = students.reduce((sum: number, student: any) => {
+              return sum + (typeof student.ball === 'number' ? student.ball : 0);
+            }, 0);
+            
+            return {
+              ...classItem,
+              totalStudents: students.length,
+              totalPoints: totalPoints
+            };
+          }
+          
+          return {
+            ...classItem,
+            totalStudents: 0,
+            totalPoints: 0
+          };
+        } catch (err) {
+          console.error(`Error fetching students for class ${classItem.id}:`, err);
+          return {
+            ...classItem,
+            totalStudents: 0,
+            totalPoints: 0
+          };
+        }
+      })
+    );
+
+    setClasses(classesWithStats);
   } catch (err) {
     console.log("Error", err)
     console.error(err);
@@ -250,6 +287,8 @@ const fetchClasses = async (page: number = 1) => {
             <tr>
               <th className="p-3">T/r</th>
               <th className="p-3">Sinf nomi</th>
+              <th className="p-3">O'quvchilar soni</th>
+              <th className="p-3">Jami ball</th>
               <th className="p-3">Sinf rahbari</th>
               <th className="p-3 text-center">Harakatlar</th>
             </tr>
@@ -257,13 +296,13 @@ const fetchClasses = async (page: number = 1) => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={4}>
+                <td colSpan={6}>
                   <CenteredProgressLoader/> 
                 </td>
               </tr>
             ) : paginated.length === 0 ? (
               <tr>
-                <td colSpan={4} className="p-8 text-center text-gray-400">
+                <td colSpan={6} className="p-8 text-center text-gray-400">
                   Ma'lumot topilmadi
                 </td>
               </tr>
@@ -285,7 +324,16 @@ const fetchClasses = async (page: number = 1) => {
                       {c.name}
                     </button>
                   </td>
-                  <td className="p-3 text-gray-400">{getTeacherName(c.teacher)}</td>
+                  <td className="p-3 text-gray-300">{c.totalStudents || 0}</td>
+                  <td className="p-3 text-gray-300 font-semibold">{c.totalPoints || 0}</td>
+                  <td className="p-3 text-gray-400">
+                    <button
+                      onClick={() => navigate(`/user/${c.teacher}`)}
+                      className="text-left w-full text-yellow-400 duration-200 hover:underline"
+                    >
+                      {getTeacherName(c.teacher)}
+                    </button>
+                  </td>
                   <td className="p-3 flex justify-center gap-4">
                     <button
                       onClick={() => {

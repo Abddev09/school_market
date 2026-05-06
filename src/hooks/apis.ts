@@ -23,9 +23,6 @@ export const createUser = async (data: any) => {
     const res = await api.post("users/", data);
     return res.data;
   } catch (error: any) {
-    console.log("STATUS:", error.response?.status);
-    console.log("ERROR DATA:", error.response?.data);
-    console.log("FULL ERROR:", error);
 
     // xohlasang yuqoriga ham o‘tkazamiz
     throw error.response?.data;
@@ -66,10 +63,7 @@ export const createClass = async (data: any) => {
     const res = await api.post("classes/", data);
     return res;
   } catch (error: any) {
-    console.log("STATUS:", error.response?.status);
-    console.log("ERROR DATA:", error.response?.data);
-    console.log("FULL ERROR:", error);
-    throw error.response?.data || error;
+       throw error.response?.data || error;
   }
 };
 
@@ -79,9 +73,6 @@ export const updateClass = async (data: any) => {
     const res = await api.patch(`classes/${data.id}/`, data);
     return res;
   } catch (error: any) {
-    console.log("STATUS:", error.response?.status);
-    console.log("ERROR DATA:", error.response?.data);
-    console.log("FULL ERROR:", error);
     throw error.response?.data || error;
   }
 };
@@ -311,6 +302,7 @@ export const getHistory = async (
 
   const query = params.length ? `?${params.join("&")}` : "";
   const res = await api.get(`history/${query}`);
+  console.log(res)
   return res;
 };
 

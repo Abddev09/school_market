@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaArrowLeft, FaUser,FaSchool, FaGraduationCap, FaEdit, FaTrash, FaKey } from "react-icons/fa";
-import { getOneUsers, getMyStudents, getClassesByTeacher, updateUser, deleteUser, updatePassword, getClasses } from "../hooks/apis";
+import { getOneUsers, getMyStudents, getClassesByTeacher, updateUser, deleteUser, updatePassword, getClasses, getStudentsByClass } from "../hooks/apis";
 import { toast } from "sonner";
 import { CenteredProgressLoader } from "../components/loading";
 import { cache } from "../utils/cache";
@@ -48,6 +48,9 @@ const UserProfile = () => {
   const [error, setError] = useState<string | null>(null);
   const [teacherClasses, setTeacherClasses] = useState<TeacherClass[]>([]);
   const [allClasses, setAllClasses] = useState<Class[]>([]);
+  const [totalPoints, setTotalPoints] = useState(0);
+  const [classStudents, setClassStudents] = useState<{ [classId: number]: { student: any; ball: number }[] }>({});
+  const [expandedClass, setExpandedClass] = useState<number | null>(null);
 
   const roleString = cache.getRole();
   const currentUserRole = roleString ? Number(atob(roleString)) : 0;
@@ -110,12 +113,40 @@ const UserProfile = () => {
         last_name: userData.last_name,
       });
 
-      // If viewing a teacher, fetch their classes
+      // If viewing a teacher, fetch their classes and total points
       if (userData.role === 2 && currentUserRole === 0) {
         try {
           const classesRes = await getClassesByTeacher(userData.id);
           const classesData = classesRes.data.results || classesRes.data;
           setTeacherClasses(Array.isArray(classesData) ? classesData : []);
+          // Classesni set qildikdan keyin total pointlarni fetch qilish
+          if (classesData) {
+            let total = 0;
+            const studentsByClass: { [classId: number]: { student: any; ball: number }[] } = {};
+            
+            for (const classItem of classesData) {
+              try {
+                const studentsRes = await getStudentsByClass(1, classItem.classe_id);
+                const students = studentsRes.data.results || studentsRes.data;
+                if (Array.isArray(students)) {
+                  studentsByClass[classItem.classe_id] = students.map((student: any) => ({
+                    student,
+                    ball: student.ball || 0
+                  }));
+                  
+                  students.forEach((student: any) => {
+                    if (typeof student.ball === 'number') {
+                      total += student.ball;
+                    }
+                  });
+                }
+              } catch (err) {
+                console.error("Error fetching students for class:", err);
+              }
+            }
+            setClassStudents(studentsByClass);
+            setTotalPoints(total);
+          }
         } catch (err) {
           console.error("Error fetching teacher classes:", err);
         }
@@ -141,6 +172,8 @@ const UserProfile = () => {
       setLoading(false);
     }
   };
+
+  
 
   useEffect(() => {
     fetchUser();
@@ -376,6 +409,12 @@ const UserProfile = () => {
               </div>
               
             </div>
+            {user.role === 2 && (
+              <div className="mt-4">
+                <label className="text-gray-400 text-sm">Jami qo'yilgan ball</label>
+                <p className="text-gray-100 font-medium">{totalPoints}</p>
+              </div>
+            )}
           </div>
 
           {/* Teacher's Classes Section */}
@@ -384,18 +423,33 @@ const UserProfile = () => {
               <h2 className="text-xl font-bold text-yellow-400 mb-4 flex items-center gap-2">
                 <FaSchool /> Ustozning Sinflari
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {teacherClasses.map((cls) => (
-                  <motion.button
-                    key={cls.classe_id}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate(`/students?class=${cls.classe_id}`)}
-                    className="block w-full text-left px-4 py-3 bg-[#2a2a2a]/50 border border-yellow-500/30 hover:border-yellow-500 hover:bg-[#2a2a2a] rounded-lg transition"
-                  >
-                    <p className="text-yellow-400 hover:text-yellow-300 font-medium text-sm">{cls.classe_name}</p>
-                  </motion.button>
-                ))}
+              <div className="flex justify-between w-full gap-5 items-center pr-2">
+                {teacherClasses.map((cls) => {
+                  const classStudentsList = classStudents[cls.classe_id] || [];
+                  const isExpanded = expandedClass === cls.classe_id;
+                  const classTotal = classStudentsList.reduce((sum, item) => sum + item.ball, 0);
+                  
+                  return (
+                    <motion.div
+                      onClick={() => navigate(`/students?class=${cls.classe_id}`)}
+                      key={cls.classe_id}
+                      className="border border-gray-600 rounded-lg overflow-hidden w-full "
+                    >
+                      <motion.button
+                        whileHover={{ backgroundColor: "rgba(42, 42, 42, 0.8)" }}
+                        onClick={() => setExpandedClass(isExpanded ? null : cls.classe_id)}
+                        className="w-full px-4 py-3 bg-[#2a2a2a]/50 text-left flex justify-between items-center transition hover:bg-[#2a2a2a] duration-200 hover:shadow-lg hover:cursor-pointer"
+                      >
+                        <div className="flex-1">
+                          <p className="text-yellow-400 font-medium">{cls.classe_name}</p>
+                          <p className="text-xs text-gray-400">O'quvchilar: {classStudentsList.length} | Jami ball: {classTotal}</p>
+                        </div>
+                       
+                      </motion.button>
+
+                    </motion.div>
+                  );
+                })}
               </div>
             </div>
           )}

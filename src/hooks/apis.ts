@@ -150,7 +150,7 @@ export const getOrders = async (page:number) => {
 
 // ⚙️ PATCH — mavjud orderlarni tahrirlash (id data ichida bo‘ladi)
 export const updateOrder = async (data: any) => {
-  const res = await api.patch(`orders/${data.get("id")}/`, data,{
+  const res = await api.patch(`orders/${data.id}/`, data,{
     headers: { "Content-Type": "multipart/form-data" },
   });
   return res;

@@ -112,6 +112,13 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, isEdit = fals
   reader.readAsDataURL(file);
 };
 
+const normalizePrice = (value: string): number | null => {
+  const cleaned = value.replace(/\s+/g, "").trim();
+  if (cleaned === "") return null;
+  const parsed = Number(cleaned);
+  return Number.isNaN(parsed) ? null : parsed;
+};
+
 // ➕ Qo'shish - yangilangan versiya
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
@@ -133,6 +140,9 @@ const handleSubmit = async (e: React.FormEvent) => {
     formData.append("name", addForm.name);
     formData.append("desc", addForm.desc);
     formData.append("is_active", String(addForm.is_active));
+    if (addForm.price !== null) {
+      formData.append("price", String(addForm.price));
+    }
     
     if (addForm.image) {
       formData.append("image", addForm.image);
@@ -387,6 +397,14 @@ const handleUpdate = async (e: React.FormEvent) => {
                 required
               />
 
+              <input
+                type="text"
+                placeholder="ball"
+                value={addForm.price !== null ? String(addForm.price) : ""}
+                onChange={(e) => setAddForm({ ...addForm, price: normalizePrice(e.target.value) })}
+                className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
+              />
+
               <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
@@ -481,8 +499,8 @@ const handleUpdate = async (e: React.FormEvent) => {
               <input
                 type="text"
                 placeholder="ball"
-                value={editForm.price || ""}
-                onChange={(e) => setEditForm({ ...editForm, price: e.target.value ? Number(e.target.value) : null })}
+                value={editForm.price !== null ? String(editForm.price) : ""}
+                onChange={(e) => setEditForm({ ...editForm, price: normalizePrice(e.target.value) })}
                 className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
               />
 

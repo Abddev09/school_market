@@ -105,6 +105,12 @@ export const getProducts = async () => {
   return res;
 };
 
+// 🔹 GET — bitta productni olish
+export const getProduct = async (id: number) => {
+  const res = await api.get(`products/${id}/`);
+  return res;
+};
+
 // ➕ POST — yangi product yaratish
 export const createProduct = async (data: any) => {
   const res = await api.post("products/", data,{

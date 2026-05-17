@@ -58,7 +58,7 @@ const Order = () => {
         return (
           <div className="flex items-center gap-2 px-3 py-1 bg-blue-500/20 text-blue-400 rounded-lg text-sm">
             <Package size={16} />
-            <span>Yetkazilmoqda</span>
+            <span>Topshirildi</span>
           </div>
         );
       case "3":
@@ -142,6 +142,10 @@ const Order = () => {
         Mening Buyurtmalarim
       </h1>
 
+      <div className="mb-6 text-center">
+        <p className="text-sm text-gray-400">Buyurtmalaringizni admin ga uchrashib olib ketishingiz mumkin</p>
+      </div>
+
       <div className="space-y-5">
         {orders.map((order) => (
           <motion.div
@@ -172,11 +176,7 @@ const Order = () => {
                   <span>Buyurtma sanasi:</span>
                   <span className="text-gray-200">{formatDate(order.date)}</span>
                 </div>
-                <div className="flex items-center gap-2 text-gray-400">
-                  <Calendar size={14} />
-                  <span>Yetkazish sanasi:</span>
-                  <span className="text-gray-200">{formatDate(order.receipt_date)}</span>
-                </div>
+                {/* Delivery date intentionally hidden for students; admin sets it when marking delivered */}
               </div>
             </div>
 

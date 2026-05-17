@@ -21,6 +21,7 @@ import Favourite from "./student/Favourite";
 import Cart from "./student/Cart";
 import Profile from "./student/Profile";
 import Market from "./student/Market";
+import ProductDetail from "./student/ProductDetail";
 import NotFound from "./components/404";
    import { useMemo } from "react";
 
@@ -50,6 +51,7 @@ const App = () => {
         { path: "/teachers", element: <Teachers /> },
         { path: "/shop", element: <Shop /> },
         { path: "/orders", element: <Orders /> },
+        { path: "/product/:id", element: <ProductDetail /> },
         { path: "/history", element: <History /> },
         { path: "/user/:id", element: <UserProfile /> },
         { path: "*", element: <DashboardLayout isPublic>
@@ -68,6 +70,7 @@ const App = () => {
       children: [
         { path: "/dashboard/teacher", element: <Teacher /> },
         { path: "/my-students", element: <MyStudents /> },
+        { path: "/product/:id", element: <ProductDetail /> },
         { path: "/user/:id", element: <UserProfile /> },
         { path: "*", element: <DashboardLayout isPublic>
       <NotFound />
@@ -84,6 +87,7 @@ const App = () => {
       ),
       children: [
         { path: "/market", element: <Market /> },
+        { path: "/product/:id", element: <ProductDetail /> },
         { path: "/my-orders", element: <Order /> },
         { path: "/my-favourite", element: <Favourite /> },
         { path: "/my-cart", element: <Cart /> },

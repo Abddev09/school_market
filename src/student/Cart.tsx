@@ -106,7 +106,7 @@ const Cart = () => {
 
   const handleOrder = async () => {
     const today = new Date();
-    const allowedDate = new Date(2026, 4, 20);
+    const allowedDate = new Date(2026, 4, 17);
 
     const isSameDay =
       today.getFullYear() === allowedDate.getFullYear() &&
@@ -158,30 +158,30 @@ const Cart = () => {
 
     try {
       setIsOrdering(true);
-      const productIds = selectedProducts.map((item) => item.product_detail.id);
       
       let successCount = 0;
+      let successfulCartIds: number[] = [];
       let failedProducts: string[] = [];
 
-      for (const productId of productIds) {
+      for (const selectedItem of selectedProducts) {
         try {
-          await createOrder({ product: productId });
+          await createOrder({ product: selectedItem.product_detail.id });
           successCount++;
+          successfulCartIds.push(selectedItem.id);
+          // Delete cart item from backend after successful order
+          await deleteCart(selectedItem.id);
         } catch (err) {
-          const failedProduct = selectedProducts.find(p => p.product_detail.id === productId);
-          if (failedProduct) {
-            failedProducts.push(failedProduct.product_detail.name);
-          }
+          failedProducts.push(selectedItem.product_detail.name);
         }
       }
 
-      if (successCount === productIds.length) {
+      if (successCount === selectedProducts.length) {
         toast.success("✅ Buyurtma muvaffaqiyatli berildi!", {
           description: `${successCount} ta mahsulot uchun buyurtma yaratildi`,
           duration: 4000
         });
         
-        setCart((prev) => prev.filter((item) => !selectedItems.includes(item.id)));
+        setCart((prev) => prev.filter((item) => !successfulCartIds.includes(item.id)));
         setSelectedItems([]);
         fetchProfile();
       } else if (successCount > 0) {
@@ -190,12 +190,8 @@ const Cart = () => {
           duration: 5000
         });
         
-        const successfulIds = selectedProducts
-          .filter(p => !failedProducts.includes(p.product_detail.name))
-          .map(p => p.id);
-        
-        setCart((prev) => prev.filter((item) => !successfulIds.includes(item.id)));
-        setSelectedItems((prev) => prev.filter(id => !successfulIds.includes(id)));
+        setCart((prev) => prev.filter((item) => !successfulCartIds.includes(item.id)));
+        setSelectedItems((prev) => prev.filter(id => !successfulCartIds.includes(id)));
         fetchProfile();
       } else {
         toast.error("❌ Buyurtma berishda xatolik yuz berdi!", {

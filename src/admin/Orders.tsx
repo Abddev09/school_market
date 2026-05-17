@@ -1,11 +1,12 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaEdit, FaTrash, FaClock, FaCheckCircle } from "react-icons/fa";
+import { FaTrash, FaClock, FaCheckCircle, FaTimes } from "react-icons/fa";
 import { toast } from "sonner";
 import { deleteOrder, getOrders, getStudentUsers, updateOrder } from "../hooks/apis";
 import { CenteredProgressLoader } from "../components/loading";
 import Pagination from "../components/Pagination";
+import { useNavigate } from "react-router-dom";
 
 interface Student {
   id: number;
@@ -17,6 +18,7 @@ interface Product {
   id: number;
   name: string;
   price: number;
+  image?: string;
 }
 
 interface Order {
@@ -39,6 +41,7 @@ const Orders = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [editForm, setEditForm] = useState({
     id: 0,
     status: "1" as "1" | "2",
@@ -98,7 +101,13 @@ const Orders = () => {
     e.preventDefault();
 
     try {
-      await updateOrder(editForm);
+      // If admin changed status to '2' (delivered) and previously wasn't '2', set receipt_date to now
+      const payload: any = { ...editForm };
+      if (selectedOrder && editForm.status === "2" && selectedOrder.status !== "2") {
+        payload.receipt_date = new Date().toISOString();
+      }
+
+      await updateOrder(payload);
       toast.success("Buyurtma yangilandi!");
       setShowEditModal(false);
       setSelectedOrder(null);
@@ -112,6 +121,7 @@ const Orders = () => {
   const handleDelete = async () => {
     if (!selectedOrder) return;
     try {
+      setDeleteLoading(true);
       await deleteOrder(selectedOrder.id);
       toast.success("Buyurtma o'chirildi!");
       setShowDeleteModal(false);
@@ -119,6 +129,8 @@ const Orders = () => {
       fetchOrders();
     } catch {
       toast.error("O'chirishda xatolik!");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -153,25 +165,53 @@ const Orders = () => {
     );
   };
 
+  const navigate = useNavigate();
+
+  
+
   const filteredOrders = orders.filter((order) => {
     const studentName = getStudentName(order.student).toLowerCase();
     const productName = order.product_detail.name.toLowerCase();
+    const orderCode = order.code.toString();
     const matchesSearch = 
       studentName.includes(searchTerm.toLowerCase()) ||
-      productName.includes(searchTerm.toLowerCase());
+      productName.includes(searchTerm.toLowerCase()) ||
+      orderCode.includes(searchTerm);
     
     const matchesStatus = filterStatus === "" || order.status === filterStatus;
     
     return matchesSearch && matchesStatus;
   });
 
+  // Sort: "Kutishda" (status "1") first, then "Yakunlandi" (status "2")
+  const sortedOrders = [...filteredOrders].sort((a, b) => {
+    if (a.status === b.status) return 0;
+    return a.status === "1" ? -1 : 1;
+  });
+
   const totalPages = Math.ceil(totalCount / perPage);
-  const paginated = filteredOrders.slice((currentPage - 1) * perPage, currentPage * perPage);
+  const paginated = sortedOrders.slice((currentPage - 1) * perPage, currentPage * perPage);
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     // Bu yerda fetchBooks(page) yoki filter logic bo‘ladi
   };
-  const startIndex = (currentPage - 1) * perPage;
+
+  
+
+  const deliverOrder = async (order: Order) => {
+    try {
+      setLoading(true);
+      const payload: any = { id: order.id, status: "2", receipt_date: new Date().toISOString() };
+      await updateOrder(payload);
+      toast.success("Buyurtma yetkazildi sifatida belgilandi");
+      fetchOrders();
+    } catch (err) {
+      console.error(err);
+      toast.error("Buyurtmani topshirishda xatolik");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="p-6 bg-linear-to-b from-[#2a2a2a] to-[#0f0f0f] min-h-[95vh] text-gray-100 rounded-2xl">
@@ -239,79 +279,95 @@ const Orders = () => {
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-xl shadow-lg bg-[#212121]/90 backdrop-blur-md border border-gray-700">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-[#2a2a2a] text-yellow-400 uppercase text-xs font-semibold">
-            <tr>
-              <th className="p-3">T/r</th>
-              <th className="p-3">Buyurtma raqami</th>
-              <th className="p-3">O'quvchi</th>
-              <th className="p-3">Mahsulot</th>
-              <th className="p-3">Buyurtma sanasi</th>
-              <th className="p-3">Olib ketish sanasi</th>
-              <th className="p-3">Holat</th>
-              <th className="p-3 text-center">Harakatlar</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (<tr>
-              <th colSpan={8}> 
-                <CenteredProgressLoader/>
-              </th>
-            </tr>) : paginated.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="p-8 text-center text-gray-400">
-                  Buyurtmalar mavjud emas
-                </td>
-              </tr>
-            ) : (
-              paginated.map((order, i) => (
-                <motion.tr
-                  key={order.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.03 }}
-                  className="border-b border-gray-700 hover:bg-yellow-400/10 transition"
-                >
-                  <td className="p-3 text-gray-300">{startIndex +i+1}</td>
-                  <td className="p-3 text-gray-300">{order?.code}</td>
-                  <td className="p-3 text-gray-100">{getStudentName(order.student)}</td>
-                  <td className="p-3 text-gray-100">{order.product_detail.name}</td>
-                  <td className="p-3 text-gray-400 text-xs">{formatDate(order.date)}</td>
-                  <td className="p-3 text-gray-400 text-xs">{formatDate(order.receipt_date)}</td>
-                  <td className="p-3">{getStatusBadge(order.status)}</td>
-                  <td className="p-3 flex justify-center gap-4">
-                    <button
-                      onClick={() => {
-                        setSelectedOrder(order);
-                        setEditForm({
-                          id: order.id,
-                          status: order.status,
-                          receipt_date: order.receipt_date,
-                        });
-                        setShowEditModal(true);
-                      }}
-                      className="text-yellow-400 hover:text-yellow-300 transition"
-                      title="Tahrirlash"
-                    >
-                      <FaEdit />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedOrder(order);
-                        setShowDeleteModal(true);
-                      }}
-                      className="text-red-500 hover:text-red-400 transition"
-                      title="O'chirish"
-                    >
-                      <FaTrash />
-                    </button>
-                  </td>
-                </motion.tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      <div>
+        {loading ? (
+          <div className="rounded-xl p-6 bg-[#212121]/90 border border-gray-700">
+            <CenteredProgressLoader />
+          </div>
+        ) : paginated.length === 0 ? (
+          <div className="rounded-xl p-6 bg-[#212121]/90 border border-gray-700 text-center text-gray-400">
+            Buyurtmalar mavjud emas
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {paginated.map((order, i) => (
+              <motion.div
+                key={order.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.02 }}
+                className="bg-gradient-to-b from-[#161616] to-[#0f0f0f] border border-gray-700 rounded-2xl p-5 shadow-2xl hover:scale-[1.02] transition-transform duration-200 ring-1 ring-transparent hover:ring-yellow-500/10"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs text-gray-400">Buyurtma #</p>
+                    <h3 className="text-lg font-semibold text-yellow-400">{order.code}</h3>
+                  </div>
+                  <div>{getStatusBadge(order.status)}</div>
+                </div>
+
+                <div className="mt-4 flex gap-4 items-center">
+                  <div className="w-20 h-20 bg-[#0f0f0f] border border-gray-700 rounded-lg flex items-center justify-center text-yellow-400 font-bold text-sm overflow-hidden flex-shrink-0">
+                    {order.product_detail.image ? (
+                      <img 
+                        src={order.product_detail.image} 
+                        alt={order.product_detail.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : null}
+                    <div className={order.product_detail.image ? 'hidden' : ''}>
+                      {order.product_detail.name.split(" ")[0]?.slice(0,2).toUpperCase()}
+                    </div>
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <button
+                        onClick={() => navigate(`/product/${order.product_detail.id}`)}
+                        className="text-lg font-semibold text-gray-100 truncate hover:underline"
+                      >
+                        {order.product_detail.name}
+                      </button>
+                      <div className="text-yellow-400 font-bold">{order.product_detail.price} ball</div>
+                    </div>
+
+                    <div className="text-sm text-gray-400 mt-1 truncate">Buyurtma sanasi: <span className="text-gray-200">{formatDate(order.date)}</span></div>
+
+                    <div className="text-sm text-gray-400 mt-2">O'quvchi: <button onClick={() => navigate(`/user/${order.student}`)} className="text-gray-100 font-medium hover:underline">{getStudentName(order.student)}</button></div>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex justify-end items-center gap-2">
+                  <button
+                    onClick={() => { setSelectedOrder(order); setShowDeleteModal(true); }}
+                    className="px-3 py-1 flex items-center justify-center gap-2 rounded bg-red-500 text-white font-semibold"
+                    title="O'chirish"
+                  >
+                    <FaTrash />
+                    Bekor qilish 
+                  </button>
+                  <button
+                    onClick={() => deliverOrder(order)}
+                    className="px-3 py-1 rounded bg-green-500 text-white font-semibold flex items-center gap-2 text-base"
+                    title="Buyurtmani topshirish"
+                  >
+                    <FaCheckCircle />
+                    Topshirish
+                  </button>
+                 
+
+                </div>
+                  
+                  
+
+                 
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
 
      {totalPages > 1 && (
@@ -359,16 +415,7 @@ const Orders = () => {
                   <option value="2">Yakunlandi</option>
                 </select>
               </div>
-
-              <div>
-                <label className="text-gray-300 font-medium block mb-2">Olib ketish sanasi:</label>
-                <input
-                  type="datetime-local"
-                  value={editForm.receipt_date ? new Date(editForm.receipt_date).toISOString().slice(0, 16) : ""}
-                  onChange={(e) => setEditForm({ ...editForm, receipt_date: e.target.value })}
-                  className="w-full border border-gray-600 bg-[#2a2a2a] p-2 rounded focus:outline-none focus:border-yellow-400"
-                />
-              </div>
+              <div className="text-sm text-gray-400">Olib ketish sanasi admin tomonidan holat "Yakunlandi" qilinsa avtomatik qo'yiladi.</div>
 
               <div className="flex justify-end gap-3 mt-5">
                 <button
@@ -390,6 +437,7 @@ const Orders = () => {
           </ModalWrapper>
         )}
       </AnimatePresence>
+     
 
       <AnimatePresence>
         {showDeleteModal && (
@@ -403,15 +451,30 @@ const Orders = () => {
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 rounded bg-[#2a2a2a] hover:bg-[#333] border border-gray-600 transition"
+                disabled={deleteLoading}
+                className="px-4 py-2 rounded bg-[#2a2a2a] hover:bg-[#333] border border-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Bekor qilish
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 rounded bg-red-500 hover:bg-red-400 text-white font-semibold"
+                disabled={deleteLoading}
+                className="px-4 py-2 rounded bg-red-500 hover:bg-red-400 text-white font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
               >
-                O'chirish
+                {deleteLoading ? (
+                  <>
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="inline-block"
+                    >
+                      <FaClock className="text-sm" />
+                    </motion.div>
+                    O'chirilmoqda...
+                  </>
+                ) : (
+                  <>O'chirish</>
+                )}
               </button>
             </div>
           </ModalWrapper>
@@ -442,10 +505,15 @@ const ModalWrapper = ({
       animate={{ scale: 1, opacity: 1 }}
       exit={{ scale: 0.8, opacity: 0 }}
       transition={{ type: "spring", stiffness: 200, damping: 15 }}
-      className="bg-[#212121]/95 text-gray-100 rounded-xl shadow-2xl w-full max-w-md p-6 border border-yellow-500/30"
+      className="bg-[#141414]/95 text-gray-100 rounded-2xl shadow-2xl w-full max-w-3xl p-6 border border-yellow-500/20"
       onClick={(e) => e.stopPropagation()}
     >
-      <h2 className="text-xl font-semibold mb-4 text-yellow-400">{title}</h2>
+      <div className="flex items-start justify-between mb-4">
+        <h2 className="text-xl font-semibold text-yellow-400">{title}</h2>
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-200 p-2 rounded-full">
+          <FaTimes />
+        </button>
+      </div>
       {children}
     </motion.div>
   </motion.div>
